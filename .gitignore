@@ -1,0 +1,13 @@
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+report.pdf
+
+# Python
+__pycache__/
+*.pyc
