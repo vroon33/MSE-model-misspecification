@@ -474,6 +474,126 @@ $N = 1000$. Under Gaussian noise it starts at $1.4$ and rises towards $\pi/2$. S
 only becomes efficient under Laplace noise once $N$ is large, while the mean is twice as bad as
 the best estimator at every $N$.
 
+\subsection{Asymmetric noise}
+\label{sec:simB}
+
+So far the noise has been symmetric about zero. In that case the mean and the median both aim at
+the same value $A$, and they only differ in their variance. Real noise is often skewed, with a long
+tail on one side. For skewed noise the mean and the median of the noise are no longer equal, and
+the two estimators aim at different values. In this section we show this, and we predict the
+value each estimator reaches before running the simulation.
+
+\paragraph{What each estimator converges to.}
+The sample mean converges to the mean of the distribution of $x[n]$, which is
+$A + E[w] = A$, since the noise still has zero mean. The sample median balances the samples, with
+half on each side, so for large $N$ it converges to the value that splits the distribution of
+$x[n]$ in half. This is the median of $x[n]$, which is $A + \operatorname{median}(w)$. So
+\[
+  \bar x \to A, \qquad \operatorname{median}(\mathbf{x}) \to A + \operatorname{median}(w).
+\]
+This is the same idea as in Section~\ref{sec:losses}. Squared error leads to the mean and absolute
+error leads to the median, and when the noise is skewed these are two different numbers.
+
+\paragraph{Exponential noise.}
+Let $E \sim \operatorname{Exp}(1)$, which has mean $1$, and set $w = E - 1$ so that $w$ has zero
+mean. The median $m$ of $E$ satisfies
+\[
+  P(E \leq m) = 1 - e^{-m} = \frac{1}{2},
+\]
+which gives $m = \ln 2$. So $\operatorname{median}(w) = \ln 2 - 1 \approx -0.307$, and we predict
+\[
+  \bar x \to 1, \qquad \operatorname{median}(\mathbf{x}) \to 1 + \ln 2 - 1 = \ln 2 \approx 0.693 .
+\]
+
+\paragraph{Lognormal noise.}
+Let $Z \sim \mathcal{N}(0, 1)$. Then $e^{Z}$ is lognormal with mean $E[e^Z] = e^{1/2}$, and we set
+$w = e^{Z} - e^{1/2}$ so that $w$ has zero mean. Since $e^{z}$ is an increasing function, the median
+of $e^{Z}$ is $e$ raised to the median of $Z$, which is $e^0 = 1$. So
+$\operatorname{median}(w) = 1 - e^{1/2} \approx -0.649$, and we predict
+\[
+  \bar x \to 1, \qquad \operatorname{median}(\mathbf{x}) \to 2 - e^{1/2} \approx 0.351 .
+\]
+The lognormal noise has a much longer right tail than the exponential noise, so it produces a
+few very large samples.
+
+Figure~\ref{fig:simB-density} shows both noise densities next to the standard Gaussian. Both have
+mean zero, but most of their probability lies to the left of zero, and this is balanced by a long
+tail on the right. The shaded area, to the left of the median, holds exactly half of the
+probability. The gap between the mean and the median is what the two estimators will see.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../figures/simB_noise_density.png}
+\caption{Density of the shifted exponential noise (left) and the shifted lognormal noise (right),
+with the standard Gaussian for comparison. The blue line is the mean and the orange dashed line is
+the median. The shaded area is half of the probability.}
+\label{fig:simB-density}
+\end{figure}
+
+\paragraph{Results.}
+The code is in \texttt{sim/sim\_B\_asymmetric\_noise.py}. Figure~\ref{fig:simB-hist} shows the
+histograms of the $5000$ estimates at $N = 100$, and Table~\ref{tab:simB} gives their average and
+standard deviation.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../figures/simB_histograms.png}
+\caption{Histograms of the mean and median estimates over $5000$ trials, with $N = 100$ and
+$A = 1$. The black line is $A$ and the red line is $A + \operatorname{median}(w)$.}
+\label{fig:simB-hist}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llcccc}
+\toprule
+Noise & Estimator & Predicted limit & Average & Predicted std & Measured std \\
+\midrule
+Exponential & Mean   & $1$     & $0.999$ & $0.100$ & $0.099$ \\
+            & Median & $0.693$ & $0.698$ & $0.100$ & $0.098$ \\
+Lognormal   & Mean   & $1$     & $1.001$ & $0.216$ & $0.215$ \\
+            & Median & $0.351$ & $0.363$ & $0.125$ & $0.127$ \\
+\bottomrule
+\end{tabular}
+\caption{Average and standard deviation of the estimates at $N = 100$, from $5000$ trials.}
+\label{tab:simB}
+\end{table}
+
+Each estimator lands where we predicted. The mean is centred on $A = 1$ for both noises, and the
+median is centred on $A + \operatorname{median}(w)$, which is $0.693$ for exponential noise and
+$0.351$ for lognormal noise. The two histograms barely overlap, so the two losses give clearly
+different answers from the same data.
+
+The predicted standard deviations in Table~\ref{tab:simB} come from the same formulas as before.
+For the mean we use \eqref{eq:varmean}, with $\operatorname{Var}(w) = 1$ for exponential noise and
+$\operatorname{Var}(w) = (e - 1)e \approx 4.67$ for lognormal noise. For the median we use
+\eqref{eq:varmedian}, where for skewed noise $p_w(0)$ is replaced by the density of $w$ at its
+median~\cite[Ch.~21]{vdv}. This density is $1/2$ for exponential noise and $1/\sqrt{2\pi}$ for
+lognormal noise. Under exponential noise both estimators have the same spread. Under lognormal
+noise the mean has almost twice the spread of the median, because the few very large samples
+from the long tail pull the mean around, just as with Laplace noise.
+
+Figure~\ref{fig:simB-N} shows the average estimate as $N$ grows. The mean is centred on $A$ at
+every $N$, since $E[\bar x] = A$ exactly. The median starts a little above its limit for small $N$
+and settles on $A + \operatorname{median}(w)$ as $N$ grows. So the difference between the two is
+not a small-sample effect. It stays no matter how much data we collect.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../figures/simB_vs_N.png}
+\caption{Average of the $5000$ estimates against $N$, for exponential noise (left) and lognormal
+noise (right).}
+\label{fig:simB-N}
+\end{figure}
+
+Note that we do not compute efficiency ratios here. The two estimators converge to different
+values, so comparing their variances with a single CRLB would compare estimators of two different
+quantities. The more important point is that the choice of loss decides which quantity we
+estimate. If $A$ is meant to be the mean of the data, MSE is the right loss. If it is meant to be
+the typical value, which the median describes better for skewed data, MAE is the right loss.
+Choosing MAE because the data has outliers, as the survey suggests~\cite{terven}, also changes
+what is being estimated when the noise is skewed.
+
 \clearpage
 \addcontentsline{toc}{section}{References}
 \begin{thebibliography}{9}
