@@ -6,7 +6,7 @@
 *.synctex.gz
 *.fdb_latexmk
 *.fls
-report.pdf
+/report.pdf
 
 # Python
 __pycache__/
