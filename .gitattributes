@@ -1,0 +1,3 @@
+# never convert line endings or diff these as text
+*.pdf binary
+*.png binary
