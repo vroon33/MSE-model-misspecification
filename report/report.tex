@@ -84,6 +84,19 @@ the model becomes
 where $\mathbf{1} = [1, 1, \dots, 1]^\top$ is the column vector of $N$ ones. This is a special case of linear regression, $\mathbf{y} = \mathbf{X}\boldsymbol{\theta} + \mathbf{w}$, with $\mathbf{X} = \mathbf{1}$ and $\boldsymbol{\theta} = A$. Here $\mathbf{X}^\top\mathbf{X} = \mathbf{1}^\top\mathbf{1} = N$, so the $1/N$ in our results becomes
 $(\mathbf{X}^\top\mathbf{X})^{-1}$ for the general regression model, which we study later.
 
+\subsection{Outline}
+
+Section~\ref{sec:losses} shows that squared error and absolute error are the maximum likelihood
+losses for Gaussian and Laplace noise. Sections~\ref{sec:crlb} and~\ref{sec:mismatch} compute the
+CRLB for these two noises and the variance of the mean and the median under each, and
+Section~\ref{sec:sims} checks the results by simulation, including skewed noise. The next two
+sections extend this to two families of noise. Section~\ref{sec:studentt} makes the tails heavier
+with the Student-t family, and Section~\ref{sec:gamma} makes the noise skewed with the gamma family.
+Section~\ref{sec:mcrb} then introduces the misspecified Cram\'er--Rao bound, which is the tight bound
+for an estimator built on a wrong noise model and explains all the earlier results in one formula.
+Section~\ref{sec:pareto} looks at Pareto noise, where the regularity conditions behind these bounds
+fail, and Section~\ref{sec:realdata} applies the same ideas to real insurance claim data.
+
 \section{Losses as noise assumptions}
 \label{sec:losses}
 
@@ -409,7 +422,7 @@ large $N$. We check these values by Monte Carlo simulation in Section~\ref{sec:s
 \label{sec:sims}
 
 In this section we check the results of Section~\ref{sec:mismatch} by simulation, and then look
-at two noise types where the theory so far does not directly apply. All the code is in the
+at skewed noise, where the theory so far does not directly apply. All the code is in the
 \texttt{sim/} folder of the project, with one script per simulation.
 
 Every simulation follows the same Monte Carlo method. We fix the true value $A = 1$ and repeat
@@ -594,6 +607,1019 @@ the typical value, which the median describes better for skewed data, MAE is the
 Choosing MAE because the data has outliers, as the survey suggests~\cite{terven}, also changes
 what is being estimated when the noise is skewed.
 
+\subsection{Summary of the results}
+
+The simulations agree with the theory in both cases. Under symmetric noise both estimators
+are unbiased, and the cost of the wrong loss shows up only as extra variance, a factor of $2$ for
+the mean under Laplace noise and $\pi/2$ for the median under Gaussian noise. Under skewed noise
+the two losses estimate different quantities, the mean and the median of the data.
+
+\section{Heavier tails, the Student-t family}
+\label{sec:studentt}
+
+So far we have compared two noise distributions with very different tails, the Gaussian and the
+Laplace. In this section we look at a whole family of symmetric noises whose tails can be made
+gradually heavier. This shows how the cost of each loss changes as the noise moves away from
+Gaussian, and it uses exactly the same tools as Sections~\ref{sec:crlb} and~\ref{sec:mismatch}.
+
+\subsection{The Student-t distribution}
+
+The Student-t distribution with $\nu > 0$ degrees of freedom and scale $s > 0$ has density
+\begin{equation}
+  p_w(w) = \frac{\Gamma\!\left(\frac{\nu+1}{2}\right)}{\sqrt{\nu\pi}\,\Gamma\!\left(\frac{\nu}{2}\right)s}
+  \left(1 + \frac{w^2}{\nu s^2}\right)^{-\frac{\nu+1}{2}} .
+  \label{eq:tpdf}
+\end{equation}
+It is symmetric about zero, so its mean and median are both zero whenever the mean exists. Its
+tails fall off like $|w|^{-(\nu+1)}$, which is much slower than the Gaussian $e^{-w^2/2}$. The
+parameter $\nu$ controls how heavy the tails are. As $\nu \to \infty$ the density tends to the
+Gaussian $\mathcal{N}(0, s^2)$, and at $\nu = 1$ it is the Cauchy distribution. Figure~\ref{fig:tdensity}
+shows the density for three values of $\nu$ on a log scale, where the difference in the tails is
+easy to see.
+
+A useful way to think about the t distribution, given by Lange et al.~\cite{lange}, is as a
+Gaussian whose variance is itself random. If $u$ is drawn from a $\chi^2_\nu/\nu$ distribution and
+then $w \mid u \sim \mathcal{N}(0, s^2/u)$, the resulting $w$ has the density \eqref{eq:tpdf}. Most
+samples come from a Gaussian with variance close to $s^2$, but now and then $u$ is small and the
+sample comes from a much wider Gaussian. These occasional wide samples are the heavy tails.
+The same paper gives the variance,
+\[
+  \operatorname{Var}(w) = \frac{\nu}{\nu - 2}\,s^2, \qquad \nu > 2,
+\]
+which is infinite for $\nu \leq 2$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{../figures/simC_t_density.png}
+\caption{Student-t densities with $s = 1$ for $\nu = 3$, $5$ and $30$, and the standard Gaussian,
+on a log scale.}
+\label{fig:tdensity}
+\end{figure}
+
+\subsection{CRLB for Student-t noise}
+
+We follow the same steps as in Section~\ref{sec:crlb}. Taking the log of \eqref{eq:tpdf} with
+$w = x - A$,
+\[
+  \ln p_w(x - A) = \text{const} - \frac{\nu + 1}{2}\ln\!\left(1 + \frac{(x-A)^2}{\nu s^2}\right).
+\]
+Differentiating with respect to $A$ gives the score of one sample,
+\begin{align*}
+  s(x; A) &= -\frac{\nu+1}{2}\cdot\frac{1}{1 + \frac{(x-A)^2}{\nu s^2}}\cdot\left(-\frac{2(x-A)}{\nu s^2}\right) \\
+  &= \frac{(\nu + 1)\,w}{\nu s^2 + w^2}.
+\end{align*}
+Note that the score grows linearly for small $w$, like the Gaussian score, but goes back to zero for
+large $|w|$. A sample far out in the tail barely changes the score, which is the first sign that the
+matched estimator will ignore outliers.
+
+The Fisher information of one sample is $i(A) = E[s(x;A)^2]$. To compute it we substitute
+$t = w/(\sqrt{\nu}\,s)$, so that $w = \sqrt{\nu}\,s\,t$ and $dw = \sqrt{\nu}\,s\,dt$. The score becomes
+\[
+  s(x; A) = \frac{(\nu+1)\,t}{\sqrt{\nu}\,s\,(1 + t^2)},
+\]
+and the density becomes $p_w(w)\,dw = c\,(1 + t^2)^{-(\nu+1)/2}\,dt$ with
+$c = 1/B\!\left(\tfrac12, \tfrac{\nu}{2}\right)$, where $B$ is the Beta function. Then
+\begin{align*}
+  i(A) &= \frac{(\nu+1)^2}{\nu s^2}\; c \int_{-\infty}^{\infty} \frac{t^2}{(1+t^2)^{(\nu+5)/2}}\,dt \\
+  &= \frac{(\nu+1)^2}{\nu s^2}\cdot\frac{B\!\left(\tfrac32, \tfrac{\nu+2}{2}\right)}{B\!\left(\tfrac12, \tfrac{\nu}{2}\right)},
+\end{align*}
+using the standard integral $\int_{-\infty}^{\infty} t^2 (1+t^2)^{-p}\,dt = B\!\left(\tfrac32, p - \tfrac32\right)$
+with $p = (\nu+5)/2$. Writing the Beta functions in terms of Gamma functions and using
+$\Gamma(z+1) = z\,\Gamma(z)$, the ratio simplifies to
+\[
+  \frac{B\!\left(\tfrac32, \tfrac{\nu+2}{2}\right)}{B\!\left(\tfrac12, \tfrac{\nu}{2}\right)}
+  = \frac{\Gamma(\tfrac32)}{\Gamma(\tfrac12)}\cdot\frac{\Gamma(\tfrac{\nu+2}{2})}{\Gamma(\tfrac{\nu}{2})}
+  \cdot\frac{\Gamma(\tfrac{\nu+1}{2})}{\Gamma(\tfrac{\nu+5}{2})}
+  = \frac12\cdot\frac{\nu}{2}\cdot\frac{4}{(\nu+3)(\nu+1)}
+  = \frac{\nu}{(\nu+1)(\nu+3)}.
+\]
+We thus obtain
+\[
+  i(A) = \frac{\nu + 1}{(\nu + 3)\,s^2}, \qquad
+  \boxed{\text{CRLB}_t = \frac{\nu + 3}{\nu + 1}\cdot\frac{s^2}{N}}
+\]
+As $\nu \to \infty$ this tends to $s^2/N$, the Gaussian CRLB, as it should.
+
+\subsection{The mean and the median}
+
+The variance of the sample mean follows from \eqref{eq:varmean},
+\[
+  \operatorname{Var}(\bar x) = \frac{\nu}{\nu - 2}\cdot\frac{s^2}{N}, \qquad \nu > 2.
+\]
+For the median we use \eqref{eq:varmedian} with the height of the density at zero,
+\[
+  p_w(0) = \frac{\Gamma\!\left(\frac{\nu+1}{2}\right)}{\sqrt{\nu\pi}\,\Gamma\!\left(\frac{\nu}{2}\right)s},
+  \qquad
+  \operatorname{Var}(\operatorname{median}) \approx \frac{1}{4N\,p_w(0)^2}.
+\]
+Dividing by the CRLB, the efficiency ratios are
+\[
+  \boxed{\frac{\operatorname{Var}(\bar x)}{\text{CRLB}_t} = \frac{\nu(\nu+1)}{(\nu-2)(\nu+3)}},
+  \qquad
+  \boxed{\frac{\operatorname{Var}(\operatorname{median})}{\text{CRLB}_t} \approx \frac{\nu + 1}{4(\nu+3)\,s^2\,p_w(0)^2}}
+\]
+Both ratios no longer depend on $s$, since $p_w(0)$ is proportional to $1/s$.
+
+These two formulas behave in opposite ways. As $\nu \to \infty$ the mean's ratio goes to $1$ and
+the median's goes to $\pi/2$, the Gaussian values of Section~\ref{sec:mismatch}. As $\nu$ decreases
+towards $2$, the mean's ratio grows without limit because the variance of the noise blows up,
+while the median's ratio stays near $1.2$. At $\nu = 3$, for example, the mean has ratio exactly $2$
+and the median has ratio $\pi^2/8 \approx 1.23$. The two curves cross at $\nu \approx 4.68$. For
+lighter tails than this the mean is the better estimator, and for heavier tails the median is
+better. This crossing point agrees with the value $4.679$ reported in the literature for the
+relative efficiency of the median and the mean under t noise.
+
+\subsection{The matched estimator}
+
+The estimator that reaches the CRLB is the MLE for t noise. Setting the total score to zero,
+\[
+  \sum_{n=0}^{N-1} \frac{(\nu + 1)(x[n] - A)}{\nu s^2 + (x[n] - A)^2} = 0 .
+\]
+If we define the weight of each sample as
+\[
+  w_n = \frac{\nu + 1}{\nu + r_n^2}, \qquad r_n = \frac{x[n] - A}{s},
+\]
+then each term of the sum equals $w_n (x[n] - A)/s^2$, and the equation becomes
+$\sum_n w_n (x[n] - A) = 0$. Solving for $A$,
+\[
+  \hat A = \frac{\sum_n w_n\, x[n]}{\sum_n w_n}.
+\]
+This is a weighted mean, and the weights are exactly those of Lange et al.~\cite[eq.~(3)]{lange}.
+The weights depend on $\hat A$ itself, so we compute $\hat A$ by starting from the median and
+repeating the weighted mean until it stops changing. A sample far from $A$ has a large $r_n$ and so
+a small weight. The t-MLE therefore behaves like the mean for samples near the centre and ignores
+samples far in the tails, which is why it can beat both the mean and the median.
+
+\subsection{Simulation results}
+
+The code is in \texttt{sim/sim\_C\_Student\_t.py}. We use $A = 1$, $s = 1$ and $5000$ trials, and
+compute the mean, the median and the t-MLE in each trial. Table~\ref{tab:simD} shows the measured
+efficiency ratios at $N = 100$ next to the predicted ones, and Figure~\ref{fig:simD} shows the
+predicted curves against $\nu$ with the simulated points.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rcccccc}
+\toprule
+ & \multicolumn{2}{c}{Mean (MSE)} & \multicolumn{2}{c}{Median (MAE)} & \multicolumn{2}{c}{t-MLE} \\
+$\nu$ & Predicted & Measured & Predicted & Measured & Predicted & Measured \\
+\midrule
+3  & 2.000 & 2.091 & 1.234 & 1.241 & 1 & 1.017 \\
+4  & 1.429 & 1.374 & 1.270 & 1.246 & 1 & 0.974 \\
+5  & 1.250 & 1.258 & 1.301 & 1.285 & 1 & 1.018 \\
+7  & 1.120 & 1.124 & 1.349 & 1.356 & 1 & 1.022 \\
+10 & 1.058 & 1.050 & 1.397 & 1.374 & 1 & 0.999 \\
+20 & 1.014 & 1.042 & 1.470 & 1.443 & 1 & 1.023 \\
+50 & 1.002 & 0.961 & 1.527 & 1.458 & 1 & 0.959 \\
+\bottomrule
+\end{tabular}
+\caption{Predicted and measured $\operatorname{Var}(\hat A)/\text{CRLB}_t$ under Student-t noise,
+$N = 100$, $5000$ trials.}
+\label{tab:simD}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{../figures/simC_ratio_vs_nu.png}
+\caption{Efficiency ratio against $\nu$ under Student-t noise at $N = 100$. Lines are the predicted
+values and markers are the simulation. The dashed line marks $\nu \approx 4.68$, where the mean and
+the median are equally efficient.}
+\label{fig:simD}
+\end{figure}
+
+All measured values agree with the predictions. The t-MLE stays at the CRLB for every $\nu$, the mean
+follows the steep curve that crosses the median near $\nu = 4.68$, and the median rises slowly
+towards $\pi/2$. Two points need a comment. For the mean at $\nu = 3$ we measured $2.09$ instead of
+$2$. For $\nu \leq 4$ the noise has an infinite fourth moment, so the sample variance of $5000$ means
+is itself a very noisy quantity, much noisier than the $2\%$ we used as a rule of thumb in
+Section~\ref{sec:sims}. At $\nu = 50$ the mean and the t-MLE are both about $4\%$ below $1$. This is
+ordinary Monte Carlo noise, since for large $\nu$ the two estimators are almost the same and their
+errors are strongly correlated.
+
+Figure~\ref{fig:simC-N} repeats the experiment for $N$ from $10$ to $1000$ at $\nu = 3$, $5$ and $10$.
+As in Section~\ref{sec:simA}, the mean's ratio is the same at every $N$, because
+$\operatorname{Var}(\bar x) = \operatorname{Var}(w)/N$ holds exactly. The median's ratio is a little
+lower at $N = 10$ and settles on its predicted value by $N$ of a few hundred.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../figures/simC_ratio_vs_N.png}
+\caption{Efficiency ratio against $N$ for $\nu = 3$, $5$ and $10$. Dotted lines are the predicted
+values.}
+\label{fig:simC-N}
+\end{figure}
+
+The Student-t family therefore shows the whole picture in one place. The loss that matches the
+noise reaches the CRLB, squared error loses more and more as the tails get heavier, and absolute
+error loses a roughly constant amount. Neither of the two common losses is best everywhere.
+
+\subsection{Infinite variance, $\nu \leq 2$}
+
+For $\nu \leq 2$ the noise has infinite variance, so the sample mean has infinite variance too and
+the ratio $\operatorname{Var}(\hat A)/\text{CRLB}$ cannot be used. The CRLB itself still exists, since
+the Fisher information $(\nu+1)/((\nu+3)s^2)$ is finite for every $\nu > 0$. To compare the estimators
+we use instead the interquartile range (IQR) of the estimates, the width of the middle half of their
+distribution, which exists for any distribution.
+
+\paragraph{The median.} From \eqref{eq:varmedian}, the median is still approximately Gaussian, with
+standard deviation $1/(2\,p_w(0)\sqrt{N})$. The IQR of a Gaussian is $2 \times 0.6745$ times its
+standard deviation, so
+\[
+  \text{IQR}(\operatorname{median}) \approx \frac{0.6745}{p_w(0)\sqrt{N}} .
+\]
+
+\paragraph{The mean at $\nu = 1$.} This is the Cauchy distribution, $p_w(w) = \frac{1}{\pi s}\,\frac{1}{1 + (w/s)^2}$,
+which has no mean and no variance. Its characteristic function is $\phi_w(t) = E[e^{jtw}] = e^{-s|t|}$.
+The average of $N$ independent noise samples, $\bar w = \frac1N\sum_n w[n]$, therefore has
+characteristic function
+\[
+  \phi_{\bar w}(t) = \left(\phi_w\!\left(\frac{t}{N}\right)\right)^{N}
+  = \left(e^{-s|t|/N}\right)^{N} = e^{-s|t|} = \phi_w(t).
+\]
+So the average of $N$ Cauchy samples has exactly the same distribution as a single sample, and the
+sample mean $\bar x = A + \bar w$ is no better than one sample $x[0]$, however large $N$ is. The
+standard Cauchy distribution has quartiles at $\pm s$, so the IQR of the mean is $2s$ for every $N$.
+
+\paragraph{Results.} Figure~\ref{fig:simC-inf} shows the IQR of both estimators against $N$ for
+$\nu = 1$ and $\nu = 2$. For $\nu = 1$ the IQR of the mean stays at $2$ for every $N$, between $1.92$
+and $2.09$ in the simulation, exactly as the characteristic function argument predicts, while the IQR
+of the median shrinks like $1/\sqrt{N}$ along its predicted line. For $\nu = 2$ the mean exists and
+the IQR of the sample mean does shrink, but more slowly than $1/\sqrt{N}$, because the variance is
+still infinite. The median is again on its predicted line.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../figures/simC_infinite_variance.png}
+\caption{Interquartile range of the mean and the median against $N$ for $\nu = 1$ (Cauchy) and
+$\nu = 2$, on log-log axes. Dotted lines are the predictions.}
+\label{fig:simC-inf}
+\end{figure}
+
+Figure~\ref{fig:simC-run} shows what this means for a single data set. It follows one long run of
+$10000$ Cauchy samples and plots the mean and the median of the first $n$ samples. The median
+settles on $A = 1$ within a few hundred samples. The mean wanders, and at $n = 2237$ a single sample
+of about $-39000$ drags it down to $-16.6$. Even after $10000$ samples the mean is still at $-4.5$,
+while the median is at $0.994$. This is the case where squared error fails completely, while absolute
+error still works.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{../figures/simC_cauchy_running.png}
+\caption{Mean and median of the first $n$ samples, for one run of Cauchy noise ($\nu = 1$) with
+$A = 1$.}
+\label{fig:simC-run}
+\end{figure}
+
+\section{Skewness, the gamma family}
+\label{sec:gamma}
+
+The Student-t family changed the tails of the noise while keeping it symmetric. In this section we
+change the skewness instead. The gamma family runs from the exponential noise of
+Section~\ref{sec:simB} to noise that is almost Gaussian, so it connects the skewed case to the
+symmetric one.
+
+\subsection{The gamma distribution}
+
+A gamma random variable $Y$ with shape $k > 0$ and scale $\theta > 0$ has density
+\[
+  p_Y(y) = \frac{y^{k-1}\,e^{-y/\theta}}{\Gamma(k)\,\theta^k}, \qquad y > 0,
+\]
+with mean $k\theta$, variance $k\theta^2$ and skewness $2/\sqrt{k}$. For $k = 1$ it is the
+exponential distribution. As $k$ grows the skewness goes to zero and, by the central limit theorem
+(a gamma variable with integer $k$ is a sum of $k$ exponentials), the distribution approaches a
+Gaussian. To use it as noise we shift it to zero mean,
+\[
+  w = Y - k\theta, \qquad \operatorname{Var}(w) = k\theta^2 .
+\]
+Figure~\ref{fig:gammadensity} shows the shape of this noise for several values of $k$, each scaled
+to unit variance so that only the shape changes. The noise always has a hard left edge at
+$w = -k\theta$ and a long right tail, and both effects fade as $k$ grows.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{../figures/simD_gamma_density.png}
+\caption{Gamma noise for $k = 1, 3, 5, 10, 30$, shifted to zero mean and scaled to unit variance,
+with the standard Gaussian for comparison.}
+\label{fig:gammadensity}
+\end{figure}
+
+\subsection{CRLB for gamma noise}
+
+With $x[n] = A + w[n]$, each sample is $x = c + Y$ with left edge $c = A - k\theta$, so $Y = x - c$.
+The log-density of one sample is
+\[
+  \ln p(x; A) = (k-1)\ln(x - c) - \frac{x - c}{\theta} + \text{const}.
+\]
+Since $c = A - k\theta$, we have $\partial c/\partial A = 1$, and differentiating with respect to $A$ gives
+the score
+\[
+  s(x; A) = -\frac{k-1}{Y} + \frac{1}{\theta}.
+\]
+To find its moments we need the negative moments of the gamma distribution. From the density,
+\[
+  E[Y^{-m}] = \frac{\Gamma(k - m)}{\Gamma(k)\,\theta^m}, \qquad k > m,
+\]
+which gives $E[1/Y] = 1/(\theta(k-1))$ for $k > 1$ and $E[1/Y^2] = 1/(\theta^2(k-1)(k-2))$ for $k > 2$.
+First we check the regularity condition. For $k > 1$,
+\[
+  E[s(x;A)] = -(k-1)\cdot\frac{1}{\theta(k-1)} + \frac{1}{\theta} = 0 .
+\]
+The Fisher information of one sample is then
+\begin{align*}
+  i(A) = E[s(x;A)^2] &= (k-1)^2 E\!\left[\frac{1}{Y^2}\right] - \frac{2(k-1)}{\theta}E\!\left[\frac{1}{Y}\right] + \frac{1}{\theta^2} \\
+  &= \frac{k-1}{\theta^2(k-2)} - \frac{2}{\theta^2} + \frac{1}{\theta^2} \\
+  &= \frac{1}{\theta^2(k-2)}, \qquad k > 2 .
+\end{align*}
+We thus obtain
+\[
+  \boxed{\text{CRLB}_\gamma = \frac{(k-2)\,\theta^2}{N}, \qquad k > 2}
+\]
+
+Here the support of the data, $x > c$, moves with $A$. Lu et al.~\cite{lu2025} show that the CRLB
+still holds in such a case if the expected squared score is finite and the density is zero at the
+edge of its support. For $k > 2$ both conditions hold, since the density behaves like $Y^{k-1}$ near
+the edge and goes to zero there, so the bound above is valid. For $1 < k \leq 2$ the density still
+goes to zero at the edge, but $E[1/Y^2]$ is infinite, so the Fisher information is infinite and the
+CRLB gives only the useless bound $0$. For $k \leq 1$ the density does not go to zero at the edge at
+all, and the CRLB does not apply. Smith~\cite{smith} studied this non-regular case and showed that estimators based on the
+smallest samples can then converge faster than $1/N$. We come back to this in
+Section~\ref{sec:pareto} with Pareto noise, where the edge itself moves with $A$.
+
+\subsection{The mean, the matched estimator and the median}
+
+The noise has zero mean, so the sample mean is unbiased, with $\operatorname{Var}(\bar x) = k\theta^2/N$.
+Dividing by the CRLB,
+\[
+  \boxed{\frac{\operatorname{Var}(\bar x)}{\text{CRLB}_\gamma} = \frac{k}{k-2}}, \qquad k > 2 .
+\]
+This is $3$ at $k = 3$ and $1.25$ at $k = 10$, and it goes to $1$ as $k \to \infty$, where the noise
+becomes Gaussian.
+
+The estimator that reaches the CRLB is the MLE for gamma noise. Setting the total score to zero,
+\[
+  \sum_{n=0}^{N-1} \frac{1}{x[n] - c} = \frac{N}{\theta(k-1)} .
+\]
+The left side increases with $c$ and goes to infinity as $c$ approaches the smallest sample, so
+this equation has exactly one solution $\hat c$ below $\min_n x[n]$. We find it numerically and set
+$\hat A = \hat c + k\theta$.
+
+The median behaves as in Section~\ref{sec:simB}. It converges to $A + \operatorname{median}(w)$, where
+$\operatorname{median}(w) = \operatorname{median}(Y) - k\theta$. The gamma median has no closed form, but
+it is well approximated by $\theta(k - 1/3)$~\cite{chenrubin}, so
+\[
+  \operatorname{median}(w) \approx -\frac{\theta}{3} .
+\]
+This means the median's bias stays close to $-\theta/3$ for every $k$, while the spread of the noise,
+$\sqrt{k}\,\theta$, keeps growing. Measured in units of the noise spread, the bias is about
+$1/(3\sqrt{k})$, so it fades as the noise becomes less skewed. For $k = 1$ the exact value is
+$\ln 2 - 1 \approx -0.307$, the shift we found in Section~\ref{sec:simB}. The variance of the median is
+given by \eqref{eq:varmedian} with the density at the median, $1/(4N f(m)^2)$.
+
+\subsection{Simulation results}
+
+The code is in \texttt{sim/sim\_D\_gamma.py}, with $A = 1$, $\theta = 1$, $N = 100$ and $5000$ trials.
+Table~\ref{tab:simE-eff} shows the efficiency of the mean and of the gamma MLE, and
+Table~\ref{tab:simE-med} shows where the median lands. Figure~\ref{fig:simE} plots the mean's ratio
+against $k$.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rcccc}
+\toprule
+$k$ & Skewness & Mean, predicted & Mean, measured & Gamma MLE, measured \\
+\midrule
+1  & 2.000 & no CRLB & no CRLB & no CRLB \\
+3  & 1.155 & 3.000 & 3.135 & 1.218 \\
+5  & 0.894 & 1.667 & 1.672 & 1.025 \\
+10 & 0.632 & 1.250 & 1.270 & 1.029 \\
+30 & 0.365 & 1.071 & 1.076 & 1.008 \\
+\bottomrule
+\end{tabular}
+\caption{$\operatorname{Var}(\hat A)/\text{CRLB}_\gamma$ under gamma noise, $N = 100$, $5000$ trials.
+The predicted value for the gamma MLE is $1$.}
+\label{tab:simE-eff}
+\end{table}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rcccc}
+\toprule
+$k$ & Limit $A + \operatorname{median}(w)$ & Average median & Predicted std & Measured std \\
+\midrule
+1  & 0.693 & 0.698 & 0.100 & 0.098 \\
+3  & 0.674 & 0.686 & 0.203 & 0.202 \\
+5  & 0.671 & 0.678 & 0.269 & 0.267 \\
+10 & 0.669 & 0.660 & 0.389 & 0.388 \\
+30 & 0.667 & 0.677 & 0.682 & 0.677 \\
+\bottomrule
+\end{tabular}
+\caption{Where the sample median lands under gamma noise, with $A = 1$, $N = 100$, $5000$ trials.}
+\label{tab:simE-med}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{../figures/simD_gamma_ratio_vs_k.png}
+\caption{Efficiency ratio of the mean and of the gamma MLE against the shape $k$. The line is
+$k/(k-2)$ and the markers are the simulation.}
+\label{fig:simE}
+\end{figure}
+
+The mean follows $k/(k-2)$ closely, and the median lands on its predicted limit with the predicted
+spread for every $k$. The $k = 1$ row reproduces the exponential results of Section~\ref{sec:simB}.
+The gamma MLE is close to the CRLB for $k \geq 5$. At $k = 3$ it is at $1.22$, which is a
+finite-sample effect. Close to the non-regular boundary $k = 2$ the MLE needs many samples to reach
+its asymptotic behaviour, and repeating the experiment at larger $N$ we found the ratio falling to
+$1.12$, $1.09$, $1.08$ and $1.04$ for $N = 100$, $300$, $1000$ and $3000$.
+
+This section leaves one question open. The median does not estimate $A$, so the CRLB, which is a
+bound for unbiased estimators of $A$, says nothing about it. The same is true for the mean under
+Laplace noise in a weaker sense. It is unbiased, but it can never reach the CRLB because it is built
+on the wrong noise model. The next section introduces the bound that does apply to such estimators.
+
+\section{A tight bound for the wrong model}
+\label{sec:mcrb}
+
+\subsection{Why the CRLB is loose here}
+
+The CRLB of Section~\ref{sec:crlb} is a bound for unbiased estimators of $A$, and it is computed from
+the true noise distribution. It tells us the best variance that any unbiased estimator could
+achieve if it knew the true noise. An estimator that is built on a wrong noise model, such as the
+sample mean under Laplace noise, can never reach this bound, no matter how many samples we use.
+Its variance stays a fixed factor above the CRLB. When the estimator is not even aiming at $A$,
+like the median under skewed noise, the CRLB does not apply to it at all. So for the estimators
+studied in this report the CRLB is a loose bound.
+
+What we need is a bound for estimators that are derived under an assumed model which may differ
+from the true one. This is the misspecified Cram\'er--Rao bound (MCRB). It was first derived by
+Vuong~\cite{vuong} and later by Richmond and Horowitz~\cite{richmond}, and Fortunati et
+al.~\cite{fortunati} give a tutorial review. We follow the notation of~\cite{fortunati}, where $p(x)$
+is the true density of one sample and $f(x \mid \theta)$ is the assumed model with parameter $\theta$.
+
+\subsection{The pseudo-true parameter}
+
+If the assumed model is wrong, there may be no value of $\theta$ for which $f(x\mid\theta) = p(x)$. The
+natural target is then the value of $\theta$ that makes the assumed model as close as possible to
+the truth. Measuring closeness by the Kullback--Leibler divergence~\cite[assumption A1]{fortunati},
+\[
+  \theta_0 = \arg\min_{\theta} D\big(p \,\|\, f(\cdot \mid \theta)\big)
+  = \arg\min_{\theta} \int p(x)\ln\frac{p(x)}{f(x\mid\theta)}\,dx .
+\]
+The term $\int p \ln p$ does not depend on $\theta$, so this is the same as
+\[
+  \theta_0 = \arg\max_{\theta} E_p\big[\ln f(x \mid \theta)\big],
+\]
+where $E_p$ means the expectation under the true density. The value $\theta_0$ is called the
+pseudo-true parameter. White~\cite{white} and Huber~\cite{huber67} showed that the MLE computed
+under the wrong model converges to $\theta_0$.
+
+We can now find the pseudo-true value for our two estimators.
+
+\paragraph{Gaussian model, the sample mean.} With $f(x\mid A) = \mathcal{N}(A, \sigma^2)$,
+\[
+  E_p[\ln f(x\mid A)] = \text{const} - \frac{1}{2\sigma^2}E_p\big[(x - A)^2\big].
+\]
+This is largest where $E_p[(x-A)^2]$ is smallest, which is at $A = E_p[x]$. With $x = A + w$ and
+$E[w] = 0$, the pseudo-true value is $A_0 = A$. The sample mean aims at the true value for any
+zero-mean noise, as we found in Section~\ref{sec:mismatch}.
+
+\paragraph{Laplace model, the sample median.} With $f(x\mid A) = \frac{1}{2b}e^{-|x - A|/b}$,
+\[
+  E_p[\ln f(x\mid A)] = \text{const} - \frac{1}{b}E_p\big[|x - A|\big].
+\]
+This is largest where $E_p|x - A|$ is smallest, which is at the median of the true distribution of
+$x$, by the same argument as in Section~\ref{sec:losses}. So $A_0 = A + \operatorname{median}(w)$.
+This is exactly the shift we predicted and measured in Section~\ref{sec:simB}. The median under
+skewed noise is not a broken estimator of $A$. It is an estimator of its own pseudo-true value.
+
+\subsection{The misspecified Cram\'er--Rao bound}
+
+Define, at the pseudo-true value, the two quantities~\cite[eqs.~(2), (3)]{fortunati}
+\[
+  \mathcal{A} = E_p\!\left[\frac{\partial^2}{\partial\theta^2}\ln f(x\mid\theta)\right]_{\theta = \theta_0},
+  \qquad
+  \mathcal{B} = E_p\!\left[\left(\frac{\partial}{\partial\theta}\ln f(x\mid\theta)\right)^2\right]_{\theta = \theta_0}.
+\]
+Both are computed with the assumed model inside and the true density outside. $\mathcal{A}$ is the
+average curvature of the assumed log-likelihood, and $\mathcal{B}$ is the variance of the assumed
+score. An estimator $\hat\theta$ derived under the assumed model is called MS-unbiased if
+$E_p[\hat\theta] = \theta_0$. Theorem 1 of~\cite{fortunati}, due to Vuong~\cite{vuong}, states that
+every MS-unbiased estimator from $N$ i.i.d.\ samples satisfies
+\begin{equation}
+  \operatorname{Var}(\hat\theta) \geq \text{MCRB} = \frac{1}{N}\,\frac{\mathcal{B}}{\mathcal{A}^2}.
+  \label{eq:mcrb}
+\end{equation}
+For a vector parameter the right side is $\frac1N \mathcal{A}^{-1}\mathcal{B}\mathcal{A}^{-1}$, which is
+why it is often called the sandwich formula.
+
+Two facts make this bound useful. First, if the assumed model is correct, then $\theta_0$ is the
+true parameter and $\mathcal{B} = -\mathcal{A}$ is the Fisher information, so \eqref{eq:mcrb} becomes
+$1/(N\mathcal{B})$, the ordinary CRLB. The MCRB is a generalisation, not a different theory. Second,
+Theorem 2 of~\cite{fortunati} states that the MLE computed under the assumed model is asymptotically
+MS-unbiased and its variance tends to the MCRB. So the MCRB is not only a lower bound for the wrong-model
+estimator, it is the variance that estimator actually has for large $N$. This is what makes it a
+tight bound.
+
+\subsection{Our earlier formulas are MCRBs}
+
+\paragraph{Gaussian model.} For $f(x\mid A) = \mathcal{N}(A, \sigma^2)$,
+\[
+  \frac{\partial}{\partial A}\ln f = \frac{x - A}{\sigma^2}, \qquad
+  \frac{\partial^2}{\partial A^2}\ln f = -\frac{1}{\sigma^2}.
+\]
+At $A_0 = A$ we have $x - A_0 = w$, so
+\[
+  \mathcal{A} = -\frac{1}{\sigma^2}, \qquad \mathcal{B} = \frac{E[w^2]}{\sigma^4} = \frac{\operatorname{Var}(w)}{\sigma^4},
+  \qquad
+  \boxed{\text{MCRB}_{\text{mean}} = \frac{1}{N}\cdot\frac{\operatorname{Var}(w)/\sigma^4}{1/\sigma^4} = \frac{\operatorname{Var}(w)}{N}}
+\]
+This is \eqref{eq:varmean}. Note that the assumed variance $\sigma^2$ cancels, so a wrong guess of the
+noise variance in the Gaussian model has no effect on how well the mean estimates $A$.
+
+\paragraph{Laplace model.} For $f(x\mid A) = \frac{1}{2b}e^{-|x-A|/b}$ the score is
+$\operatorname{sign}(x - A)/b$, so $\mathcal{B} = 1/b^2$. The second derivative does not exist at
+$x = A$, so we use the form of $\mathcal{A}$ that Huber~\cite{huber67} used for such estimators, the
+derivative of the expected score. With $F$ the true distribution function of $x$,
+\[
+  E_p\!\left[\frac{\operatorname{sign}(x - A)}{b}\right] = \frac{1 - 2F(A)}{b},
+  \qquad
+  \mathcal{A} = \frac{d}{dA}\,\frac{1 - 2F(A)}{b}\bigg|_{A_0} = -\frac{2 f(m)}{b},
+\]
+where $f(m)$ is the true density at the median. This agrees with the definition in~\cite{fortunati}
+whenever the derivative and the expectation can be swapped. Then
+\[
+  \boxed{\text{MCRB}_{\text{median}} = \frac{1}{N}\cdot\frac{1/b^2}{4f(m)^2/b^2} = \frac{1}{4N f(m)^2}}
+\]
+which is \eqref{eq:varmedian}, again with the assumed scale $b$ cancelling.
+
+So every variance formula used in Sections~\ref{sec:mismatch} to~\ref{sec:gamma} is an MCRB, and the
+efficiency ratios we have been computing are
+\[
+  \frac{\operatorname{Var}(\hat A)}{\text{CRLB}} = \frac{\text{MCRB}}{\text{CRLB}} ,
+\]
+the price of the wrong model measured against the best possible estimator.
+
+\paragraph{When the pseudo-true value is not $A$.} If $\theta_0$ differs from the true value, the mean
+square error about the true value has an extra bias term~\cite[Section~3.4]{fortunati},
+\[
+  \text{MSE} = E_p\big[(\hat\theta - \theta_{\text{true}})^2\big] \approx \text{MCRB} + (\theta_0 - \theta_{\text{true}})^2 .
+\]
+For the median under skewed noise the bias is $\operatorname{median}(w)$. The MCRB shrinks like $1/N$
+but the bias does not, so for large $N$ the bias dominates.
+
+\subsection{A mistake in the variance}
+
+The MCRB also answers what happens when we estimate the noise variance itself with a wrong model.
+We look at two kinds of mistake.
+
+\paragraph{A wrong mean.} This is the example worked out in~\cite[Section~4.2]{fortunati}. The data are
+$\mathcal{N}(\mu, \sigma^2)$, but the variance is estimated assuming the mean is zero, with the model
+$f(x\mid\theta) = \mathcal{N}(0, \theta)$. The MLE under this model is $\hat\theta = \frac1N\sum_n x[n]^2$.
+The pseudo-true value is $\theta_0 = E[x^2] = \sigma^2 + \mu^2$, and the bound is
+\[
+  \text{MCRB} = \frac{2\sigma^4 + 4\mu^2\sigma^2}{N}, \qquad \text{CRLB} = \frac{2\sigma^4}{N}.
+\]
+We reproduce this example in simulation as a check of our code.
+
+\paragraph{A wrong noise shape.} Now the noise has zero mean and we again assume the model
+$\mathcal{N}(0, \theta)$, but the true noise is not Gaussian. For this model
+\[
+  \ln f(x\mid\theta) = -\tfrac12\ln(2\pi\theta) - \frac{x^2}{2\theta}, \qquad
+  \frac{\partial}{\partial\theta}\ln f = \frac{x^2 - \theta}{2\theta^2}, \qquad
+  \frac{\partial^2}{\partial\theta^2}\ln f = \frac{1}{2\theta^2} - \frac{x^2}{\theta^3}.
+\]
+Setting the expected score to zero gives the pseudo-true value $\theta_0 = E[x^2] = \sigma^2$, the true
+variance, so the estimator aims at the right value. At $\theta_0 = \sigma^2$,
+\[
+  \mathcal{A} = \frac{1}{2\sigma^4} - \frac{\sigma^2}{\sigma^6} = -\frac{1}{2\sigma^4}, \qquad
+  \mathcal{B} = \frac{E[(x^2 - \sigma^2)^2]}{4\sigma^8} = \frac{\mu_4 - \sigma^4}{4\sigma^8},
+\]
+where $\mu_4 = E[w^4]$ is the fourth moment of the noise. Then
+\[
+  \boxed{\text{MCRB}_{\sigma^2} = \frac{\mu_4 - \sigma^4}{N}}
+\]
+There are now three different numbers one could call a bound.
+\begin{enumerate}
+  \item The CRLB computed from the assumed Gaussian model, $2\sigma^4/N$. This is what one would
+        write down if one trusted the Gaussian assumption.
+  \item The CRLB computed from the true noise model. This is the best any unbiased estimator of
+        $\sigma^2$ could do if it knew the true noise.
+  \item The MCRB, the variance that the Gaussian-model estimator actually has.
+\end{enumerate}
+For Laplace noise with scale $b$ we have $\sigma^2 = 2b^2$ and $\mu_4 = 24b^4$, so
+$\text{MCRB} = 20b^4/N$, while the Gaussian-model CRLB is $2(2b^2)^2/N = 8b^4/N$. For the true CRLB we
+use the Laplace model with parameter $b$, whose Fisher information per sample is $1/b^2$, and the
+transformation rule for the CRLB~\cite{kay}. Since $\sigma^2 = 2b^2$ and $d\sigma^2/db = 4b$,
+\[
+  \text{CRLB}_{\sigma^2} = \frac{(4b)^2}{N\cdot 1/b^2} = \frac{16 b^4}{N}.
+\]
+For Student-t noise with $\nu > 4$, using $\mu_4 = 3\nu^2 s^4/((\nu-2)(\nu-4))$ and the Fisher
+information of the scale, $2\nu/((\nu+3)s^2)$, the same steps give
+\begin{align*}
+  \text{MCRB} &= \frac{2\nu^2(\nu-1)}{(\nu-2)^2(\nu-4)}\cdot\frac{s^4}{N}, \\
+  \text{CRLB} &= \frac{2\nu(\nu+3)}{(\nu-2)^2}\cdot\frac{s^4}{N}, \\
+  \text{Gaussian-model CRLB} &= \frac{2\nu^2}{(\nu-2)^2}\cdot\frac{s^4}{N}.
+\end{align*}
+
+The ordering is the important part. For Laplace noise the Gaussian-model CRLB, $8b^4/N$, is below
+the true CRLB, $16b^4/N$. So the bound one gets by trusting the wrong model is not a valid bound at
+all, since no unbiased estimator can go below $16b^4/N$. The true CRLB is valid but loose for our
+estimator, which actually has variance $20b^4/N$, the MCRB. The ratio $\text{MCRB}/\text{CRLB} = 1.25$
+is the price of assuming Gaussian noise when estimating the variance of Laplace noise. Dividing the
+MCRB by the Gaussian-model CRLB gives $(\mu_4/\sigma^4 - 1)/2$, which depends only on the kurtosis of
+the noise. It equals $1$ for Gaussian noise, where the kurtosis is $3$, and $2.5$ for Laplace noise,
+where the kurtosis is $6$.
+
+\subsection{Simulation results}
+
+The code is in \texttt{sim/sim\_E\_mcrb.py}, with $N = 100$ and $20000$ trials for the variance
+examples. Table~\ref{tab:simF-fortunati} reproduces the example of~\cite[Section~4.2]{fortunati}.
+
+\begin{table}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{cccccccc}
+\toprule
+$\mu$ & $\theta_0$ & Average $\hat\theta$ & $N\cdot$CRLB & $N\cdot$MCRB & $N\cdot$Var, measured
+ & $N\cdot$MSE, measured & $N\cdot$(MCRB $+$ bias$^2$) \\
+\midrule
+0   & 1.00 & 0.999 & 2 & 2 & 1.984 & 1.984   & 2.00 \\
+0.5 & 1.25 & 1.249 & 2 & 3 & 2.984 & 9.186   & 9.25 \\
+1   & 2.00 & 2.000 & 2 & 6 & 6.102 & 106.106 & 106.00 \\
+\bottomrule
+\end{tabular}}
+\caption{The variance example of Fortunati et al.~\cite[Section~4.2]{fortunati}, with $\sigma = 1$,
+$N = 100$, $20000$ trials. The MSE is measured about the true variance $\sigma^2 = 1$.}
+\label{tab:simF-fortunati}
+\end{table}
+
+The estimate lands on the pseudo-true value $\sigma^2 + \mu^2$, its variance matches the MCRB, and its
+mean square error about the true variance matches $\text{MCRB} + \mu^4$, as stated in~\cite{fortunati}.
+
+Table~\ref{tab:simF-variance} shows the case of a wrong noise shape.
+
+\begin{table}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccccccc}
+\toprule
+True noise & True $\sigma^2$ & Average $\hat\theta$ & Gaussian-model CRLB & True CRLB & MCRB & Measured \\
+\midrule
+Laplace, $b = 1$       & 2.000 & 2.002 & 8.000 & 16.000 & 20.000 & 20.038 \\
+Student-t, $\nu = 10$  & 1.250 & 1.248 & 3.125 & 4.062  & 4.688  & 4.595 \\
+Student-t, $\nu = 20$  & 1.111 & 1.113 & 2.469 & 2.840  & 2.932  & 2.938 \\
+Gaussian               & 1.000 & 0.999 & 2.000 & 2.000  & 2.000  & 1.998 \\
+\bottomrule
+\end{tabular}}
+\caption{Estimating the noise variance with a Gaussian model. All bounds and the measured variance
+are multiplied by $N = 100$. $20000$ trials.}
+\label{tab:simF-variance}
+\end{table}
+
+In every row the estimator is unbiased for the true variance and its measured variance is on the
+MCRB, above the true CRLB and well above the Gaussian-model CRLB. The Student-t row with $\nu = 10$
+is $2\%$ below its MCRB, because for heavy tails the sample variance of $20000$ estimates is itself
+noisy. In the Gaussian row there is no mismatch and all three bounds coincide.
+
+Finally, Table~\ref{tab:simF-location} puts every location case of this report side by side.
+
+\begin{table}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+Noise & Estimator & Pseudo-true & Average & $N\cdot$CRLB & $N\cdot$MCRB & $N\cdot$Var, measured \\
+\midrule
+Gaussian            & Mean   & 1.000 & 1.000 & 1.000 & 1.000 & 0.982 \\
+Gaussian            & Median & 1.000 & 1.000 & 1.000 & 1.571 & 1.529 \\
+Laplace             & Mean   & 1.000 & 1.001 & 1.000 & 2.000 & 1.995 \\
+Laplace             & Median & 1.000 & 1.000 & 1.000 & 1.000 & 1.201 \\
+Student-t, $\nu = 5$ & Mean  & 1.000 & 0.997 & 1.333 & 1.667 & 1.631 \\
+Student-t, $\nu = 5$ & Median & 1.000 & 0.998 & 1.333 & 1.735 & 1.698 \\
+Gamma, $k = 5$      & Mean   & 1.000 & 1.001 & 3.000 & 5.000 & 4.997 \\
+Gamma, $k = 5$      & Median & 0.671 & 0.675 & 3.000 & 7.249 & 7.178 \\
+Exponential         & Mean   & 1.000 & 1.001 & none  & 1.000 & 1.002 \\
+Exponential         & Median & 0.693 & 0.699 & none  & 1.000 & 0.963 \\
+\bottomrule
+\end{tabular}}
+\caption{Location estimation with $A = 1$, $N = 100$, $5000$ trials. The mean is the MLE of a
+Gaussian model and the median is the MLE of a Laplace model. For gamma and exponential noise the
+median's MCRB is a variance about its pseudo-true value, not about $A$.}
+\label{tab:simF-location}
+\end{table}
+
+Each estimator lands on its pseudo-true value and its variance matches its MCRB, whatever the true
+noise is. The one visible gap is the median under Laplace noise, $1.20$ instead of $1$. This is the
+small-sample effect of Section~\ref{sec:simA}, since the MCRB, like the CRLB, is reached only as
+$N$ grows. Wherever a CRLB exists, it lies below the MCRB, and the distance between them is the cost
+of using a loss that does not match the noise.
+
+\subsection{Summary}
+
+The CRLB tells us what is possible with the right noise model. The MCRB tells us what we actually
+get with the model we assumed, and the estimator built on that model reaches it. Their ratio is the
+price of the wrong assumption, which is exactly the efficiency ratio of the earlier sections. The
+pseudo-true value explains where a wrong-model estimator ends up, including the median's shift under
+skewed noise. For variance estimation, trusting the Gaussian model gives a number that is not even a
+valid bound when the noise has heavy tails, while the MCRB gives the correct variance.
+
+\section{When the bound breaks, Pareto noise}
+\label{sec:pareto}
+
+Both the CRLB and the MCRB need regularity conditions. In this section we look at a noise for which
+these conditions fail, and we see an estimator whose variance falls much faster than any CRLB would
+allow. We also give a bound that still holds in this case.
+
+\subsection{The Pareto distribution}
+
+A Pareto random variable $P$ with shape $\alpha > 0$ and minimum value $1$ has density
+\[
+  p_P(p) = \frac{\alpha}{p^{\alpha + 1}}, \qquad p \geq 1 .
+\]
+Its tail falls off like a power of $p$, so it is heavy-tailed, and the moment $E[P^r]$ is finite only
+for $r < \alpha$. In particular
+\[
+  E[P] = \frac{\alpha}{\alpha - 1}\ (\alpha > 1), \qquad
+  \operatorname{Var}(P) = \frac{\alpha}{(\alpha-1)^2(\alpha-2)}\ (\alpha > 2), \qquad
+  \operatorname{median}(P) = 2^{1/\alpha}.
+\]
+Pareto models are used in signal processing for heavy-tailed radar sea clutter~\cite{bocquet}. As
+before we shift it to zero mean, $w = P - \alpha/(\alpha - 1)$, which needs $\alpha > 1$.
+Figure~\ref{fig:paretodensity} shows the noise for three values of $\alpha$. Unlike every noise so far,
+the density does not start at zero. It jumps from $0$ to $\alpha$ at the left edge
+$w = 1 - \alpha/(\alpha-1) = -1/(\alpha - 1)$.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{../figures/simF_pareto_density.png}
+\caption{Pareto noise shifted to zero mean, for $\alpha = 2.5$, $3$ and $5$. The density jumps from
+$0$ to $\alpha$ at the left edge.}
+\label{fig:paretodensity}
+\end{figure}
+
+\subsection{Why the CRLB does not apply}
+
+The data $x[n] = A + w[n]$ live on $x \geq A - 1/(\alpha - 1)$, so the left edge of the support moves
+with $A$. Writing $u = x - A + \alpha/(\alpha-1)$ for the value of $P$, the log-density of one sample is
+$\ln\alpha - (\alpha + 1)\ln u$, and the score is
+\[
+  s(x; A) = \frac{\partial}{\partial A}\ln p(x; A) = \frac{\alpha + 1}{u}.
+\]
+The first regularity condition of the CRLB is that the score has zero mean. Here
+\[
+  E[s(x;A)] = (\alpha + 1)\,E\!\left[\frac1P\right] = (\alpha+1)\cdot\frac{\alpha}{\alpha+1} = \alpha \neq 0 ,
+\]
+so the condition fails. The reason is the edge. When the support depends on $A$, differentiating
+$\int p(x;A)\,dx = 1$ with respect to $A$ gives an extra boundary term, equal to the height of the
+density at the edge, and this term is only zero when the density is zero there~\cite{lu2025}. For
+Pareto noise the density at the edge is $\alpha$.
+
+If we ignore this and compute the CRLB formula anyway, using $E[1/P^2] = \alpha/(\alpha+2)$, we get
+\[
+  \text{naive CRLB} = \frac{1}{N\,(\alpha+1)^2\,\alpha/(\alpha+2)} = \frac{\alpha + 2}{N\,\alpha(\alpha+1)^2}.
+\]
+We will see that an estimator beats this number by a large factor, which shows it is not a valid bound.
+
+\subsection{Three estimators}
+
+\paragraph{The mean.} The noise has zero mean, so the sample mean is unbiased, with
+\[
+  \operatorname{Var}(\bar x) = \frac{\alpha}{(\alpha-1)^2(\alpha-2)\,N}, \qquad \alpha > 2 .
+\]
+For $\alpha \leq 2$ the noise has infinite variance and so does the mean.
+
+\paragraph{The median.} As in Section~\ref{sec:mcrb}, the median goes to its pseudo-true value
+$A + \operatorname{median}(w) = A + 2^{1/\alpha} - \alpha/(\alpha-1)$. The density of $P$ at its median is
+$\alpha\,2^{-(\alpha+1)/\alpha}$, so from \eqref{eq:varmedian}
+\[
+  \operatorname{Var}(\operatorname{median}) \approx \frac{2^{2(\alpha+1)/\alpha}}{4N\alpha^2} = \frac{2^{2/\alpha}}{N\alpha^2}.
+\]
+
+\paragraph{The minimum.} The edge carries a lot of information. The smallest sample is always just
+above the edge, and the edge is at a known distance below $A$. The distribution of the minimum of
+$N$ Pareto samples follows from
+\[
+  P\Big(\min_n P_n > t\Big) = \prod_{n} P(P_n > t) = \left(t^{-\alpha}\right)^N = t^{-N\alpha},
+\]
+so the minimum is itself Pareto with shape $N\alpha$. Its mean is $N\alpha/(N\alpha - 1)$, so an
+unbiased estimator of $A$ is
+\[
+  \hat A_{\min} = \min_n x[n] + \frac{\alpha}{\alpha - 1} - \frac{N\alpha}{N\alpha - 1},
+\]
+with variance
+\[
+  \boxed{\operatorname{Var}(\hat A_{\min}) = \frac{N\alpha}{(N\alpha - 1)^2 (N\alpha - 2)} \approx \frac{1}{(N\alpha)^2}}
+\]
+This falls like $1/N^2$, while the mean, the median and the naive CRLB all fall like $1/N$. So for
+large enough $N$ the min-based estimator must go below the naive CRLB. This is possible only
+because the CRLB does not apply.
+
+\subsection{A bound that still holds}
+
+The Hammersley--Chapman--Robbins bound~\cite{hammersley, chapmanrobbins} needs no regularity
+conditions. For an unbiased estimator of $A$ it states
+\[
+  \operatorname{Var}(\hat A) \geq \sup_{h \neq 0}\ \frac{h^2}{E_A\!\left[\left(\dfrac{p(\mathbf{x}; A + h)}{p(\mathbf{x}; A)}\right)^{2}\right] - 1},
+\]
+where the expectation is over the data at the true value $A$. The idea is to compare the true
+parameter with a nearby value $A + h$. If the data cannot tell $A$ and $A + h$ apart well, no
+estimator can be precise. As $h \to 0$, and when the regularity conditions hold, the bound becomes
+the CRLB.
+
+For Pareto noise the ratio is only finite when $h > 0$, because for $h < 0$ the shifted density is
+positive where the true one is zero. For $N$ i.i.d.\ samples the expectation is a product,
+\[
+  E_A\!\left[\left(\frac{p(\mathbf{x}; A+h)}{p(\mathbf{x}; A)}\right)^2\right] = E_1(h)^N, \qquad
+  E_1(h) = \int_{1+h}^{\infty} \frac{\alpha\,u^{\alpha+1}}{(u - h)^{2\alpha + 2}}\,du ,
+\]
+and we find the supremum over $h$ numerically.
+
+\subsection{Simulation results}
+
+The code is in \texttt{sim/sim\_F\_pareto.py}, with $A = 1$ and $5000$ trials. Table~\ref{tab:simG}
+gives the variances at $N = 100$, and Figure~\ref{fig:simG} shows how they change with $N$ for
+$\alpha = 3$.
+
+\begin{table}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{ccccccccc}
+\toprule
+ & \multicolumn{2}{c}{Mean} & \multicolumn{2}{c}{Median} & \multicolumn{2}{c}{Min-based} & Naive & Chapman--\\
+$\alpha$ & Predicted & Measured & Predicted & Measured & Predicted & Measured & CRLB & Robbins \\
+\midrule
+2.5 & $2.22\times10^{-2}$ & $2.02\times10^{-2}$ & $2.79\times10^{-3}$ & $2.69\times10^{-3}$ & $1.63\times10^{-5}$ & $1.57\times10^{-5}$ & $1.47\times10^{-3}$ & $1.04\times10^{-5}$ \\
+3   & $7.50\times10^{-3}$ & $7.90\times10^{-3}$ & $1.76\times10^{-3}$ & $1.81\times10^{-3}$ & $1.13\times10^{-5}$ & $1.16\times10^{-5}$ & $1.04\times10^{-3}$ & $7.22\times10^{-6}$ \\
+5   & $1.04\times10^{-3}$ & $1.07\times10^{-3}$ & $5.28\times10^{-4}$ & $5.47\times10^{-4}$ & $4.03\times10^{-6}$ & $4.17\times10^{-6}$ & $3.89\times10^{-4}$ & $2.60\times10^{-6}$ \\
+\bottomrule
+\end{tabular}}
+\caption{Variances under Pareto noise at $N = 100$, $5000$ trials. The median's variance is about
+its own pseudo-true value.}
+\label{tab:simG}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\linewidth]{../figures/simF_pareto_var_vs_N.png}
+\caption{Variance of each estimator against $N$ for $\alpha = 3$, with the naive CRLB and the
+Chapman--Robbins bound, on log-log axes.}
+\label{fig:simG}
+\end{figure}
+
+All measured variances agree with the predictions. At $N = 100$ and $\alpha = 3$, the min-based
+estimator has variance $1.16\times10^{-5}$, almost $100$ times smaller than the naive CRLB of
+$1.04\times10^{-3}$. On the log-log plot the mean, the median and the naive CRLB fall with slope
+$-1$, while the min-based estimator falls with slope $-2.04$. The Chapman--Robbins bound falls with
+slope $-2.01$ and stays just below the min-based estimator at every $N$, so it is a valid and nearly
+tight bound here.
+
+This case completes the picture from Section~\ref{sec:gamma}. Gamma noise with a small shape and
+Pareto noise both have a hard edge, and a hard edge is very informative. An estimator that uses the
+edge, such as the minimum, can be far more precise than any estimator that treats the noise as
+smooth, and the CRLB, which assumes a smooth problem, no longer describes what is possible. Neither
+squared nor absolute error uses the edge, so both are far from the best estimator here.
+
+\section{Matching the noise in real data}
+\label{sec:realdata}
+
+In all the previous sections we chose the noise ourselves. With real data the noise distribution
+is unknown, and the first task is to find which family describes it. This is the usual workflow in
+applied statistics~\cite{fitdistrplus, gamlss}. We fit several candidate distributions, compare them,
+and then use the best description to predict how the mean and the median behave. Here we take the
+first steps of this on a real dataset. The gamma family is a natural candidate because its shape
+parameter covers everything from very skewed (small $k$) to almost Gaussian (large $k$), as we saw
+in Section~\ref{sec:gamma}.
+
+\subsection{The data}
+
+We use the French motor third-party liability claims dataset, \texttt{freMTPL2sev}~\cite{casdatasets},
+which contains the amount of each of $26639$ insurance claims. It is a standard benchmark, and the
+scikit-learn documentation uses it with a gamma model for claim severity~\cite{sklearntweedie}. For
+now we ignore the policy information and treat the claim amounts as samples from one distribution,
+so the question is the same as in the DC level problem: what is the typical claim, and how well do
+the mean and the median estimate it?
+
+The data are extremely skewed. The mean claim is $2279$ but the median is only $1172$, the standard
+deviation is $29297$, and the largest claim is about $4$ million. There is also a feature we never
+had in simulation. About $42\%$ of all claims sit exactly on five fixed amounts, the largest group
+being $4792$ claims of exactly $1204$. These are most likely standard settlement amounts. No
+continuous distribution can describe such spikes, so we expect every fit to be imperfect.
+
+\subsection{Fitting candidate distributions}
+
+We fit five families by maximum likelihood with \texttt{scipy.stats}, fixing the location at
+zero for the families that live on positive values. The code for this section is in
+\texttt{sim/sim\_G\_real\_data.py}.
+We compare them with the Akaike information criterion,
+\[
+  \text{AIC} = 2p - 2\ln L ,
+\]
+where $p$ is the number of fitted parameters and $\ln L$ is the maximised log-likelihood, so a lower
+AIC means a better fit after paying for extra parameters. We also report the Kolmogorov--Smirnov
+statistic, the largest gap between the fitted and the empirical distribution functions.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Family & Parameters & Log-likelihood & AIC & KS statistic \\
+\midrule
+Lognormal   & 2 & $-223590$ & $447184$ & 0.233 \\
+Weibull     & 2 & $-227509$ & $455021$ & 0.204 \\
+Gamma       & 2 & $-231154$ & $462312$ & 0.272 \\
+Exponential & 1 & $-232593$ & $465188$ & 0.335 \\
+Gaussian    & 2 & $-311788$ & $623579$ & 0.469 \\
+\bottomrule
+\end{tabular}
+\caption{Maximum likelihood fits to the $26639$ claim amounts, sorted by AIC.}
+\label{tab:simH-fits}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{../figures/simG_claims_hist.png}
+\caption{Histogram of $\log_{10}$ of the claim amounts with the fitted densities. The spike of fixed
+amounts near $1200$ is cut off at the top.}
+\label{fig:simH-hist}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../figures/simG_claims_qq.png}
+\caption{QQ plots of the claim amounts against the fitted gamma, lognormal and Weibull distributions,
+on log scales. A perfect fit would lie on the dashed line.}
+\label{fig:simH-qq}
+\end{figure}
+
+The Gaussian is by far the worst fit, which is expected for data that are positive and this
+skewed. The lognormal has the lowest AIC and the Weibull the smallest KS statistic, while the gamma
+is in between. None of the fits is good, for two reasons that are visible in the figures. The flat
+steps in the QQ plots are the spikes of fixed amounts. At the top right, the largest claims bend
+sharply above every fitted line, so the real tail is heavier than even the lognormal. A power-law
+tail like the Pareto of Section~\ref{sec:pareto} would be a better description of the largest claims.
+
+\subsection{What the gamma shape tells us}
+
+The fitted gamma shape is $k = 0.687$, with scale $\theta = 3315$. Since $k < 1$, the data are more
+skewed than the exponential noise of Section~\ref{sec:simB}, with skewness $2/\sqrt{k} = 2.41$ for
+the fitted model. From Section~\ref{sec:gamma} this tells us two things. First, the mean and the
+median of such data are far apart, so squared error and absolute error estimate very different
+values of the typical claim. Indeed the mean is about twice the median. Second, for $k \leq 1$ there
+is no usable CRLB for a location parameter, so the efficiency ratios of the earlier sections cannot
+even be defined. The choice between the two losses is here a choice of what to estimate, as in
+Section~\ref{sec:simB}, not a question of efficiency.
+
+\subsection{The wrong-model standard error}
+
+How precise is the sample mean on these data? There are three ways to answer, and they connect to
+Section~\ref{sec:mcrb}.
+\begin{enumerate}
+  \item Trust the fitted gamma model. Its variance is $k\theta^2$, so the standard error of the mean
+        would be $\sqrt{k}\,\theta/\sqrt{N}$.
+  \item Use the sample estimate of the MCRB~\cite[Section~4.1]{fortunati}. For the mean, the sample
+        versions of $\mathcal{A}$ and $\mathcal{B}$ from Section~\ref{sec:mcrb} give the sample variance
+        divided by $N$. This uses the data directly and makes no assumption about the noise.
+  \item Use the bootstrap. We resample the claims with replacement $2000$ times and take the
+        standard deviation of the resampled means.
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Estimate & Value & SE from gamma model & SE from sample MCRB & SE from bootstrap \\
+\midrule
+Mean (MSE)   & 2278.5 & 16.8 & 179.5 & 177.0 \\
+Median (MAE) & 1172.0 & --   & --    & 0.0 \\
+\bottomrule
+\end{tabular}}
+\caption{The typical claim estimated by the mean and the median, with standard errors.}
+\label{tab:simH-se}
+\end{table}
+
+The sample MCRB and the bootstrap agree, at about $178$. The gamma model gives $16.8$, which is
+$10.7$ times too small. The fitted gamma has a standard deviation of $\sqrt{k}\,\theta = 2748$, but the
+data have $29297$, because the gamma tail is far too light for the largest claims. This is the same
+lesson as the variance example of Section~\ref{sec:mcrb}. A precision computed by trusting the
+assumed model can be far too optimistic, while the MCRB estimated from the data gives the right
+answer.
+
+The median shows the effect of the spikes. The sample median is $1172$, which is itself one of the
+fixed amounts with $2072$ claims. Resampling never moves the median off this value, so its bootstrap
+standard error is zero. The formula $1/(4Nf(m)^2)$ of Section~\ref{sec:mismatch} assumes a smooth
+density at the median, and a spike behaves like an infinitely tall density there, which also gives a
+standard error of zero. On these data the median is extremely stable, but only because of how the
+claims are recorded.
+
+\subsection{Next steps}
+
+This is a first look at the data, without the policy features. The next steps are to treat the
+spikes of fixed amounts separately from the continuous part, as is done with zero-adjusted models in
+GAMLSS~\cite{gamlss}, to describe the largest claims with a Pareto tail, and to use the policy
+features to compare a gamma regression model with least squares and least absolute deviation
+regression. These steps connect this section to the nonlinear models of the project plan.
+
 \clearpage
 \addcontentsline{toc}{section}{References}
 \begin{thebibliography}{9}
@@ -604,6 +1630,47 @@ what is being estimated when the noise is skewed.
   learning,'' \emph{Artificial Intelligence Review}, vol.~58, article 195, 2025.
 \bibitem{vdv} A.~W.~van der Vaart, \emph{Asymptotic Statistics}, Cambridge University Press,
   1998.
+\bibitem{lange} K.~L.~Lange, R.~J.~A.~Little and J.~M.~G.~Taylor, ``Robust statistical modeling
+  using the t distribution,'' \emph{Journal of the American Statistical Association}, vol.~84,
+  no.~408, pp.~881--896, 1989.
+\bibitem{smith} R.~L.~Smith, ``Maximum likelihood estimation in a class of nonregular cases,''
+  \emph{Biometrika}, vol.~72, no.~1, pp.~67--90, 1985.
+\bibitem{chenrubin} J.~Chen and H.~Rubin, ``Bounds for the difference between median and mean of
+  gamma and Poisson distributions,'' \emph{Statistics \& Probability Letters}, vol.~4, no.~6,
+  pp.~281--283, 1986.
+\bibitem{fortunati} S.~Fortunati, F.~Gini, M.~S.~Greco and C.~D.~Richmond, ``Performance bounds
+  for parameter estimation under misspecified models: Fundamental findings and applications,''
+  \emph{IEEE Signal Processing Magazine}, vol.~34, no.~6, pp.~142--157, 2017.
+\bibitem{vuong} Q.~H.~Vuong, ``Cram\'er-Rao bounds for misspecified models,'' Working Paper 652,
+  Division of the Humanities and Social Sciences, California Institute of Technology, 1986.
+\bibitem{richmond} C.~D.~Richmond and L.~L.~Horowitz, ``Parameter bounds on estimation accuracy
+  under model misspecification,'' \emph{IEEE Transactions on Signal Processing}, vol.~63, no.~9,
+  pp.~2263--2278, 2015.
+\bibitem{white} H.~White, ``Maximum likelihood estimation of misspecified models,''
+  \emph{Econometrica}, vol.~50, no.~1, pp.~1--25, 1982.
+\bibitem{huber67} P.~J.~Huber, ``The behavior of maximum likelihood estimates under nonstandard
+  conditions,'' in \emph{Proceedings of the Fifth Berkeley Symposium on Mathematical Statistics and
+  Probability}, vol.~1, pp.~221--233, 1967.
+\bibitem{lu2025} Q.~Lu, Y.~Bar-Shalom and P.~Willett, ``Likelihood functions with
+  parameter-dependent support: A survey of the Cram\'er-Rao-Leibniz lower bound,'' arXiv:2508.01145,
+  2025.
+\bibitem{bocquet} S.~Bocquet, ``Parameter estimation for Pareto and K distributed clutter with
+  noise,'' \emph{IET Radar, Sonar \& Navigation}, 2015.
+\bibitem{hammersley} J.~M.~Hammersley, ``On estimating restricted parameters,'' \emph{Journal of the
+  Royal Statistical Society, Series B}, vol.~12, no.~2, pp.~192--240, 1950.
+\bibitem{chapmanrobbins} D.~G.~Chapman and H.~Robbins, ``Minimum variance estimation without
+  regularity assumptions,'' \emph{Annals of Mathematical Statistics}, vol.~22, no.~4,
+  pp.~581--586, 1951.
+\bibitem{fitdistrplus} M.~L.~Delignette-Muller and C.~Dutang, ``fitdistrplus: An R package for
+  fitting distributions,'' \emph{Journal of Statistical Software}, vol.~64, no.~4, pp.~1--34, 2015.
+\bibitem{gamlss} R.~A.~Rigby and D.~M.~Stasinopoulos, ``Generalized additive models for location,
+  scale and shape,'' \emph{Journal of the Royal Statistical Society, Series C}, vol.~54, no.~3,
+  pp.~507--554, 2005.
+\bibitem{casdatasets} C.~Dutang and A.~Charpentier, \emph{CASdatasets: Insurance datasets}, R
+  package, dataset \texttt{freMTPL2sev}, available on OpenML as dataset 41215.
+\bibitem{sklearntweedie} scikit-learn developers, ``Tweedie regression on insurance claims,''
+  scikit-learn documentation example,
+  \url{https://scikit-learn.org/stable/auto_examples/linear_model/plot_tweedie_regression_insurance_claims.html}.
 \end{thebibliography}
 
 \end{document}
