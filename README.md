@@ -65,7 +65,7 @@ When the true data-generating distribution $p_w(w)$ differs from the assumed mod
 1. **Efficiency Loss:** The estimator's variance exceeds the Cramér–Rao Lower Bound (CRLB). We quantify this via the **Efficiency Ratio**:
 
 $$
-\text{Efficiency Ratio} = \frac{\operatorname{Var}(\hat{\theta})}{\text{CRLB}} \ge 1
+\text{Efficiency Ratio} = \frac{\mathrm{Var}(\hat{\theta})}{\text{CRLB}} \ge 1
 $$
 
    Under Laplace noise, MSE requires **2.0x as much data** as MAE. Under Gaussian noise, MAE requires $\mathbf{\pi/2 \approx 1.571\times}$ **as much data** as MSE.
@@ -145,7 +145,7 @@ $$
 If the likelihood satisfies the regularity condition $\mathbb{E}\left[\frac{\partial \ln p(\mathbf{x}; A)}{\partial A}\right] = 0$, every unbiased estimator $\hat{A}$ satisfies:
 
 $$
-\operatorname{Var}(\hat{A}) \ge \frac{1}{I(A)}, \quad I(A) = N \cdot i(A), \quad i(A) = \mathbb{E}\left[\left(\frac{\partial \ln p_w(w)}{\partial A}\right)^2\right]
+\mathrm{Var}(\hat{A}) \ge \frac{1}{I(A)}, \quad I(A) = N \cdot i(A), \quad i(A) = \mathbb{E}\left[\left(\frac{\partial \ln p_w(w)}{\partial A}\right)^2\right]
 $$
 
 - **Gaussian CRLB:**
@@ -185,7 +185,7 @@ $$
 The asymptotic variance of any MS-unbiased estimator satisfies the **sandwich formula** (Vuong 1986, Fortunati et al. 2017):
 
 $$
-\operatorname{Var}(\hat{\theta}) \ge \text{MCRB} = \frac{1}{N} \frac{B}{A^2}
+\mathrm{Var}(\hat{\theta}) \ge \text{MCRB} = \frac{1}{N} \frac{B}{A^2}
 $$
 
 where:
@@ -195,7 +195,7 @@ A = \mathbb{E}_p\left[\left.\frac{\partial^2 \ln f(x \mid \theta)}{\partial \the
 $$
 
 - **Gaussian Model for Location under Arbitrary Noise:**
-  $A = -1/\sigma^2$, $B = \operatorname{Var}(w)/\sigma^4 \implies \text{MCRB}_{\text{mean}} = \frac{\operatorname{Var}(w)}{N}$. (Matches exact sample mean variance!).
+  $A = -1/\sigma^2$, $B = \mathrm{Var}(w)/\sigma^4 \implies \text{MCRB}_{\text{mean}} = \frac{\mathrm{Var}(w)}{N}$. (Matches exact sample mean variance!).
 - **Laplace Model for Location under Arbitrary Noise:**
   $A = -2f(m)/b$, $B = 1/b^2 \implies \text{MCRB}_{\text{median}} = \frac{1}{4N f(m)^2}$ where $f(m)$ is the true density at the median.
 - **Gaussian Model for Variance under Laplace Noise:**
@@ -227,13 +227,13 @@ $$
 - Variance of noise:
 
 $$
-\operatorname{Var}(w) = \alpha^2 \frac{\Gamma(3/\beta)}{\Gamma(1/\beta)}
+\mathrm{Var}(w) = \alpha^2 \frac{\Gamma(3/\beta)}{\Gamma(1/\beta)}
 $$
 
 - **Exact Efficiency Ratio of the Sample Mean (MSE):**
 
 $$
-\frac{\operatorname{Var}(\bar{x})}{\text{CRLB}} = \operatorname{Var}(w) \cdot i(A) = \beta^2 \frac{\Gamma(3/\beta)\Gamma(2 - 1/\beta)}{(\Gamma(1/\beta))^2}
+\frac{\mathrm{Var}(\bar{x})}{\text{CRLB}} = \mathrm{Var}(w) \cdot i(A) = \beta^2 \frac{\Gamma(3/\beta)\Gamma(2 - 1/\beta)}{(\Gamma(1/\beta))^2}
 $$
 
 - For $\beta = 1.0$ (Laplace limit): $(1)^2 \cdot \frac{\Gamma(3)\Gamma(1)}{(\Gamma(1))^2} = 2.000$.
@@ -248,28 +248,28 @@ When the density does not vanish at support boundaries that depend on $A$, the r
 
 1. **Pareto Noise ($w = P - \frac{\alpha}{\alpha-1}$):**
    - Support edge: $x \ge A - \frac{1}{\alpha-1}$. The density jumps from 0 to $\alpha$ at the edge.
-   - Sample Mean: $\operatorname{Var}(\bar{x}) = \frac{\alpha}{(\alpha-1)^2(\alpha-2)N} = O(1/N)$.
+   - Sample Mean: $\mathrm{Var}(\bar{x}) = \frac{\alpha}{(\alpha-1)^2(\alpha-2)N} = O(1/N)$.
    - Min-based MLE: $\hat{A}_{\min} = \min(x) + \frac{\alpha}{\alpha-1} - \frac{N\alpha}{N\alpha-1}$.
 
 $$
-\operatorname{Var}(\hat{A}_{\min}) = \frac{N\alpha}{(N\alpha-1)^2(N\alpha-2)} \approx \frac{1}{(N\alpha)^2} = O(1/N^2)
+\mathrm{Var}(\hat{A}_{\min}) = \frac{N\alpha}{(N\alpha-1)^2(N\alpha-2)} \approx \frac{1}{(N\alpha)^2} = O(1/N^2)
 $$
 
 - **Hammersley–Chapman–Robbins Bound:** Valid without regularity:
 
 $$
-\operatorname{Var}(\hat{A}) \ge \sup_{h > 0} \frac{h^2}{\mathbb{E}_1(h)^N - 1}, \quad \mathbb{E}_1(h) = \int_{1+h}^\infty \frac{\alpha u^{\alpha+1}}{(u - h)^{2\alpha+2}} du
+\mathrm{Var}(\hat{A}) \ge \sup_{h > 0} \frac{h^2}{\mathbb{E}_1(h)^N - 1}, \quad \mathbb{E}_1(h) = \int_{1+h}^\infty \frac{\alpha u^{\alpha+1}}{(u - h)^{2\alpha+2}} du
 $$
 
 2. **Uniform Noise ($w \sim \mathcal{U}[-\Delta, \Delta]$):**
-   - Sample Mean (MSE): $\operatorname{Var}(\bar{x}) = \frac{\Delta^2}{3N} = O(1/N)$.
+   - Sample Mean (MSE): $\mathrm{Var}(\bar{x}) = \frac{\Delta^2}{3N} = O(1/N)$.
    - Midrange MLE: $\hat{A}_{\text{mid}} = \frac{\min(x) + \max(x)}{2}$.
 
 $$
-\operatorname{Var}(\hat{A}_{\text{mid}}) = \frac{2\Delta^2}{(N+1)(N+2)} = O(1/N^2)
+\mathrm{Var}(\hat{A}_{\text{mid}}) = \frac{2\Delta^2}{(N+1)(N+2)} = O(1/N^2)
 $$
 
-- Efficiency Ratio: $\frac{\operatorname{Var}(\bar{x})}{\operatorname{Var}(\hat{A}_{\text{mid}})} = \frac{(N+1)(N+2)}{6} = O(N) \to \infty$.
+- Efficiency Ratio: $\frac{\mathrm{Var}(\bar{x})}{\mathrm{Var}(\hat{A}_{\text{mid}})} = \frac{(N+1)(N+2)}{6} = O(N) \to \infty$.
 
 ---
 
@@ -302,23 +302,22 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 | **Mean (MSE $\to$ Gaussian)**  |          1.000          |      **0.968**      |         2.000         |     **2.007**     |
 | **Median (MAE $\to$ Laplace)** | $\pi/2 \approx 1.571$ |      **1.512**      |         1.000         |     **1.169**     |
 
-- **Sample Size Scaling:**|     $N$     | Mean (Gauss) | Median (Gauss) |         Mean (Laplace)         | Median (Laplace) |
+- **Sample Size Scaling:**|     $N$     | Mean (Gauss) | Median (Gauss) |         Mean (Laplace)         | Median (Laplace) || :------------: | :----------: | :------------: | :-----------------------------: | :--------------: |
   | :------------: | :----------: | :------------: | :-----------------------------: | :--------------: |
-  | **10** | 1.024 | 1.400 | 2.034 | 1.491 |
-  | **50** | 0.988 | 1.523 | 1.961 | 1.171 |
-  | **100** | 0.976 | 1.489 | 1.967 | 1.140 |
-  | **500** | 1.016 | 1.582 | 2.002 | 1.048 |
-  | **1000** | 0.967 | 1.557 | 1.972 | **1.055** |
+  |  **50**  |    0.988    |     1.523     |              1.961              |      1.171      |
+  | **100** |    0.976    |     1.489     |              1.967              |      1.140      |
+  | **500** |    1.016    |     1.582     |              2.002              |      1.048      |
+  | **1000** |    0.967    |     1.557     |              1.972              | **1.055** |
 - **Justification of Plot [`figures/simA_ratio_vs_N.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simA_ratio_vs_N.png):**
-  The Mean curves are completely flat at 1.0 (Gauss) and 2.0 (Laplace) for all $N$ because $\operatorname{Var}(\bar{x}) = \operatorname{Var}(w)/N$ holds algebraically. The Median curves approach asymptotic efficiency (1.0 under Laplace, $\pi/2$ under Gauss) as $N$ increases.
+  The Mean curves are completely flat at 1.0 (Gauss) and 2.0 (Laplace) for all $N$ because $\mathrm{Var}(\bar{x}) = \mathrm{Var}(w)/N$ holds algebraically. The Median curves approach asymptotic efficiency (1.0 under Laplace, $\pi/2$ under Gauss) as $N$ increases.
 
 ---
 
 ### Simulation B: Asymmetric Noise & Pseudo-True Target Shift
 
 - **Script:** [`Classic_sim/sim_B_asymmetric_noise.py`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/Classic_sim/sim_B_asymmetric_noise.py)
-- **Shifted Exponential:** $w = E - 1$, median $= \ln 2 - 1 \approx -0.307$, $\operatorname{Var}(w) = 1.0$.
-- **Shifted Lognormal:** $w = e^Z - e^{0.5}$, median $= 1 - e^{0.5} \approx -0.649$, $\operatorname{Var}(w) = (e-1)e \approx 4.671$.
+- **Shifted Exponential:** $w = E - 1$, median $= \ln 2 - 1 \approx -0.307$, $\mathrm{Var}(w) = 1.0$.
+- **Shifted Lognormal:** $w = e^Z - e^{0.5}$, median $= 1 - e^{0.5} \approx -0.649$, $\mathrm{Var}(w) = (e-1)e \approx 4.671$.
 
 #### Verification Table (N = 100, 5,000 Trials, A = 1.0):
 
@@ -339,7 +338,7 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 ### Simulation C: Heavy Tails, Student-t Family & Cauchy Invariance
 
 - **Script:** [`Classic_sim/sim_C_Student_t.py`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/Classic_sim/sim_C_Student_t.py)
-- **Formulas:** $\text{CRLB}_t = \frac{\nu+3}{\nu+1}\frac{s^2}{N}$, $\frac{\operatorname{Var}(\bar{x})}{\text{CRLB}_t} = \frac{\nu(\nu+1)}{(\nu-2)(\nu+3)}$ (for $\nu > 2$).
+- **Formulas:** $\text{CRLB}_t = \frac{\nu+3}{\nu+1}\frac{s^2}{N}$, $\frac{\mathrm{Var}(\bar{x})}{\text{CRLB}_t} = \frac{\nu(\nu+1)}{(\nu-2)(\nu+3)}$ (for $\nu > 2$).
 - **Theoretical Crossing Point:** $\nu^* \approx 4.679$.
 
 #### Verification Table (N = 100, 5,000 Trials):
@@ -373,13 +372,13 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 
 #### Verification Table (N = 100, 5,000 Trials, θ = 1.0):
 
-|  Shape$k$  | Skewness$\frac{2}{\sqrt{k}}$ | Mean Ratio (Pred) | Mean Ratio (Meas) | Gamma MLE (Meas) | Median Limit (Pred) | Median Avg (Meas) |
-| :----------: | :----------------------------: | :---------------: | :---------------: | :--------------: | :-----------------: | :---------------: |
-| **1** |             2.000             |      No CRLB      |      No CRLB      |     No CRLB     |        0.693        |  **0.698**  |
-| **3** |             1.155             |       3.000       |  **3.135**  | **1.218** |        0.674        |  **0.686**  |
-| **5** |             0.894             |       1.667       |  **1.672**  | **1.025** |        0.671        |  **0.678**  |
-| **10** |             0.632             |       1.250       |  **1.270**  | **1.029** |        0.669        |  **0.660**  |
-| **30** |             0.365             |       1.071       |  **1.076**  | **1.008** |        0.667        |  **0.677**  |
+| Shape$k$ | Skewness$\frac{2}{\sqrt{k}}$ | Mean Ratio (Pred) | Mean Ratio (Meas) | Gamma MLE (Meas) | Median Limit (Pred) | Median Avg (Meas) |                |
+| :-----------------------------------------: | :---------------: | :---------------: | :--------------: | :-----------------: | :---------------: | :-------------: |
+|                 **1**                 |       2.000       |      No CRLB      |     No CRLB     |       No CRLB       |       0.693       | **0.698** |
+|                 **3**                 |       1.155       |       3.000       | **3.135** |   **1.218**   |       0.674       | **0.686** |
+|                 **5**                 |       0.894       |       1.667       | **1.672** |   **1.025**   |       0.671       | **0.678** |
+|                **10**                |       0.632       |       1.250       | **1.270** |   **1.029**   |       0.669       | **0.660** |
+|                **30**                |       0.365       |       1.071       | **1.076** |   **1.008**   |       0.667       | **0.677** |
 
 - **Justification of Plots:**
   - [`figures/simD_gamma_density.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simD_gamma_density.png): Transition from exponential ($k=1$) to Gaussian ($k=30$).
@@ -394,20 +393,20 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 
 #### Verification Table: Fortunati et al. Section 4.2 (Assumed Mean 0, True Mean μ):
 
-| True Mean$\mu$ | Pseudo-True$\theta_0$ | Avg Estimate | $N \cdot \text{CRLB}$ | $N \cdot \text{MCRB}$ (Theory) | $N \cdot \operatorname{Var}$ (Meas) | $N \cdot \text{MSE}$ (Meas) |
-| :--------------: | :---------------------: | :----------: | :---------------------: | :------------------------------: | :-----------------------------------: | :---------------------------: |
-|  **0.0**  |          1.00          |    0.999    |           2.0           |               2.0               |            **1.984**            |        **1.984**        |
-|  **0.5**  |          1.25          |    1.249    |           2.0           |               3.0               |            **2.984**            |        **9.186**        |
-|  **1.0**  |          2.00          |    2.000    |           2.0           |               6.0               |            **6.102**            |       **106.106**       |
+| True Mean$\mu$ | Pseudo-True$\theta_0$ | Avg Estimate | $N \cdot \text{CRLB}$ | $N \cdot \text{MCRB}$ (Theory) | $N \cdot \mathrm{Var}$ (Meas) | $N \cdot \text{MSE}$ (Meas) |                  |
+| :----------------------------------------: | :----------: | :---------------------: | :------------------------------: | :-----------------------------: | :---------------------------: | :---------------: |
+|               **0.0**               |     1.00     |          0.999          |               2.0               |               2.0               |        **1.984**        |  **1.984**  |
+|               **0.5**               |     1.25     |          1.249          |               2.0               |               3.0               |        **2.984**        |  **9.186**  |
+|               **1.0**               |     2.00     |          2.000          |               2.0               |               6.0               |        **6.102**        | **106.106** |
 
 #### Verification Table: Estimating Noise Variance with Gaussian Model:
 
-| True Noise                           | True Variance$\sigma^2$ | $N \cdot \text{Wrong CRLB}$ | $N \cdot \text{True CRLB}$ | $N \cdot \text{MCRB}$ (Theory) | $N \cdot \operatorname{Var}$ (Meas) |
-| :----------------------------------- | :-----------------------: | :---------------------------: | :--------------------------: | :------------------------------: | :-----------------------------------: |
-| **Laplace ($b=1$)**          |           2.000           |             8.000             |            16.000            |              20.000              |           **20.038**           |
-| **Student-$t$ ($\nu=10$)** |           1.250           |             3.125             |            4.062            |              4.688              |            **4.595**            |
-| **Student-$t$ ($\nu=20$)** |           1.111           |             2.469             |            2.840            |              2.932              |            **2.938**            |
-| **Gaussian (No mismatch)**     |           1.000           |             2.000             |            2.000            |              2.000              |            **1.998**            |
+| True Noise                           | True Variance$\sigma^2$ | $N \cdot \text{Wrong CRLB}$ | $N \cdot \text{True CRLB}$ | $N \cdot \text{MCRB}$ (Theory) | $N \cdot \mathrm{Var}$ (Meas) |
+| :----------------------------------- | :-----------------------: | :---------------------------: | :--------------------------: | :------------------------------: | :-----------------------------: |
+| **Laplace ($b=1$)**          |           2.000           |             8.000             |            16.000            |              20.000              |        **20.038**        |
+| **Student-$t$ ($\nu=10$)** |           1.250           |             3.125             |            4.062            |              4.688              |         **4.595**         |
+| **Student-$t$ ($\nu=20$)** |           1.111           |             2.469             |            2.840            |              2.932              |         **2.938**         |
+| **Gaussian (No mismatch)**     |           1.000           |             2.000             |            2.000            |              2.000              |         **1.998**         |
 
 ---
 
@@ -418,11 +417,11 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 
 #### Verification Table (N = 100, 5,000 Trials):
 
-|  $\alpha$  | $\operatorname{Var}(\text{Mean})$ (Meas) | $\operatorname{Var}(\text{Median})$ (Meas) | $\operatorname{Var}(\text{Min-based})$ (Meas) | Naive CRLB (Invalid) | Chapman–Robbins (Valid) |
-| :-----------: | :----------------------------------------: | :------------------------------------------: | :---------------------------------------------: | :------------------: | :----------------------: |
-| **2.5** |               2.02 × 10⁻²               |                2.69 × 10⁻³                |            **1.57 × 10⁻⁵**            |    1.47 × 10⁻³    |      1.04 × 10⁻⁵      |
-| **3.0** |               7.90 × 10⁻³               |                1.81 × 10⁻³                |            **1.16 × 10⁻⁵**            |    1.04 × 10⁻³    |      7.22 × 10⁻⁶      |
-| **5.0** |               1.07 × 10⁻³               |                5.47 × 10⁻⁴                |            **4.17 × 10⁻⁶**            |    3.89 × 10⁻⁴    |      2.60 × 10⁻⁶      |
+|  $\alpha$  | $\mathrm{Var}(\text{Mean})$ (Meas) | $\mathrm{Var}(\text{Median})$ (Meas) | $\mathrm{Var}(\text{Min-based})$ (Meas) | Naive CRLB (Invalid) | Chapman–Robbins (Valid) |
+| :-----------: | :----------------------------------: | :------------------------------------: | :---------------------------------------: | :------------------: | :----------------------: |
+| **2.5** |            2.02 × 10⁻²            |             2.69 × 10⁻³             |         **1.57 × 10⁻⁵**         |    1.47 × 10⁻³    |      1.04 × 10⁻⁵      |
+| **3.0** |            7.90 × 10⁻³            |             1.81 × 10⁻³             |         **1.16 × 10⁻⁵**         |    1.04 × 10⁻³    |      7.22 × 10⁻⁶      |
+| **5.0** |            1.07 × 10⁻³            |             5.47 × 10⁻⁴             |         **4.17 × 10⁻⁶**         |    3.89 × 10⁻⁴    |      2.60 × 10⁻⁶      |
 
 - **Log-Log Slopes against $N$ ($\alpha=3.0$):**
   - Sample Mean: **-1.00** ($O(1/N)$).
@@ -476,13 +475,13 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 
 #### 3. Uniform Noise Super-Efficiency (Δ = √3, Unit Variance):
 
-| Sample Size$N$ | $\operatorname{Var}(\text{Mean})$ (Meas) | $\operatorname{Var}(\text{Midrange})$ (Meas) | Efficiency Advantage ($\operatorname{Var}_{\text{Mean}}/\operatorname{Var}_{\text{Mid}}$) |                  |
-| :--------------: | :----------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------: | :--------------: |
-|   **10**   |                   0.1006                   |                                                                    0.0444                                                                    | **2.26x** |
-|   **50**   |                   0.0198                   |                                                                    0.0023                                                                    | **8.62x** |
-|  **100**  |                   0.0099                   |                                                                    0.0006                                                                    | **18.00x** |
-|  **200**  |                   0.0049                   |                                                                    0.0002                                                                    | **32.52x** |
-|  **500**  |                   0.0020                   |                                                                   0.000024                                                                   | **83.84x** |
+| Sample Size$N$ | $\mathrm{Var}(\text{Mean})$ (Meas) | $\mathrm{Var}(\text{Midrange})$ (Meas) | Efficiency Advantage ($\mathrm{Var}_{\text{Mean}}/\mathrm{Var}_{\text{Mid}}$) |                  |
+| :--------------: | :----------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :--------------: |
+|   **10**   |                0.1006                |                                                           0.0444                                                           | **2.26x** |
+|   **50**   |                0.0198                |                                                           0.0023                                                           | **8.62x** |
+|  **100**  |                0.0099                |                                                           0.0006                                                           | **18.00x** |
+|  **200**  |                0.0049                |                                                           0.0002                                                           | **32.52x** |
+|  **500**  |                0.0020                |                                                          0.000024                                                          | **83.84x** |
 
 #### 4. Logistic Noise (Scale s = √3/π):
 
@@ -688,7 +687,7 @@ This section provides an explicit technical definition of how every file in the 
 
    - *Purpose:* Establishes baseline efficiency ratios for Sample Mean (MSE) and Sample Median (MAE) under Gaussian and Laplace noise.
    - *Inputs:* $A=1.0$, $\sigma=1.0$, $b=1.0$, $N \in [10, 1000]$, 5,000 Monte Carlo trials.
-   - *Logic:* Computes $\operatorname{Var}(\bar{x})/\text{CRLB}$ and $\operatorname{Var}(\text{median})/\text{CRLB}$.
+   - *Logic:* Computes $\mathrm{Var}(\bar{x})/\text{CRLB}$ and $\mathrm{Var}(\text{median})/\text{CRLB}$.
    - *Outputs:* Console comparison table at $N=100$, sample size sweep, and plot [`figures/simA_ratio_vs_N.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simA_ratio_vs_N.png).
 2. **[`sim_B_asymmetric_noise.py`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/Classic_sim/sim_B_asymmetric_noise.py):**
 
@@ -831,7 +830,7 @@ python run_experiments.py --dataset boston --eval_only --load_path saved_models/
 
 | Figure Filename                                                                                                                                      | Experiment / Script | Theoretical Justification & Scientific Content                                                                                                                                                                     |
 | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`simA_ratio_vs_N.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simA_ratio_vs_N.png)                             | Sim A               | Compares efficiency ratio$\operatorname{Var}/\text{CRLB}$ vs. $N$. Shows that Mean is algebraically constant at 1 (Gauss) and 2 (Laplace), while Median asymptotically approaches 1 and $\pi/2$.             |
+| [`simA_ratio_vs_N.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simA_ratio_vs_N.png)                             | Sim A               | Compares efficiency ratio$\mathrm{Var}/\text{CRLB}$ vs. $N$. Shows that Mean is algebraically constant at 1 (Gauss) and 2 (Laplace), while Median asymptotically approaches 1 and $\pi/2$.                   |
 | [`simB_noise_density.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simB_noise_density.png)                       | Sim B               | Plots probability densities of shifted Exponential and Lognormal noise with mean (0) and median marked to show mass asymmetry.                                                                                     |
 | [`simB_histograms.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simB_histograms.png)                             | Sim B               | Histograms of Mean and Median estimates over 5,000 trials showing distinct non-overlapping peaks.                                                                                                                  |
 | [`simB_vs_N.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simB_vs_N.png)                                         | Sim B               | Average estimate vs.$N$. Shows that the median's bias persists indefinitely regardless of sample size.                                                                                                           |
@@ -866,7 +865,7 @@ python run_experiments.py --dataset boston --eval_only --load_path saved_models/
 
 ## 8. Summary Taxonomy Table: The Full Spectrum of Misspecification
 
-| Noise Distribution                                                                                                                                                                      | Density Geometry                                                                 | Matched MLE / Loss                                                                                                                  | MSE Limit                                                                                                                |     Efficiency Ratio$\frac{\operatorname{Var}(\bar{x})}{\text{CRLB}}$     | Neural Network Impact                                               |
+| Noise Distribution                                                                                                                                                                      | Density Geometry                                                                 | Matched MLE / Loss                                                                                                                  | MSE Limit                                                                                                                |        Efficiency Ratio$\frac{\mathrm{Var}(\bar{x})}{\text{CRLB}}$        | Neural Network Impact                                               |
 | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------: | :------------------------------------------------------------------ |
 | **Gaussian $\mathcal{N}(0, \sigma^2)$** | Light tails ($e^{-w^2}$) | MSE ($L_2$) | Unbiased,$\bar{x} \to A$                                                               | **1.000**                                                                  | Correctly specified; achieves lowest test RMSE.                                                                                     |                                                                                                                          |                                                                            |                                                                     |
 | **Laplace $(0, b)$** | Medium tails ($e^{-\ | w\ | }$) | MAE ($L_1$) | Unbiased,$\bar{x} \to A$                                                                           |                                                                                  |                                                                                                                                     |                                                                                                                          |                                                                            |                                                                     |
@@ -893,3 +892,18 @@ All empirical, mathematical, and algorithmic goals set forth in the research pla
 3. **Adaptive Objective Selection (RCOS):** Our proposed held-out calibration framework autonomously selects the optimal loss function without sacrificing Gaussian efficiency (100% selection accuracy under Gaussian noise).
 4. **Empirical Actuarial Solution:** The failure of continuous models on real insurance claims was resolved via a Two-Part Spike-Adjusted Model and Extreme Value Theory Generalized Pareto modeling, proving that MSE's failure is driven by infinite-variance tail claims ($\alpha = 1.09$).
 5. **Codebase Reproducibility:** Every model can be retrained or loaded in under 1 second via [`run_experiments.py`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/run_experiments.py) with all checkpoints persisted in [`saved_models/`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/saved_models/).
+
+---
+
+## 10. References & Bibliography
+
+1. S. M. Kay, *Fundamentals of Statistical Signal Processing, Volume I: Estimation Theory*, Prentice Hall, 1993.
+2. J. Terven et al., "A comprehensive survey of loss functions and metrics in deep learning," *Artificial Intelligence Review*, vol. 58, 2025.
+3. S. Fortunati, F. Gini, M. S. Greco, and C. D. Richmond, "Performance bounds for parameter estimation under misspecified models: Fundamental findings and applications," *IEEE Signal Processing Magazine*, vol. 34, no. 6, pp. 142–157, 2017.
+4. Q. H. Vuong, "Cramér-Rao bounds for misspecified models," Caltech Working Paper 652, 1986.
+5. P. J. Huber, "The behavior of maximum likelihood estimates under nonstandard conditions," in *Proc. 5th Berkeley Symp. Math. Statist. Prob.*, vol. 1, 1967.
+6. K. L. Lange, R. J. A. Little, and J. M. G. Taylor, "Robust statistical modeling using the t distribution," *JASA*, vol. 84, no. 408, 1989.
+7. J. T. Barron, "A general and adaptive robust loss function," *CVPR*, 2019.
+8. X. Wang, L. Zhou, and H. Lin, "Deep regression learning with optimal loss function," *arXiv:2309.12872 [stat.ME]*, JASA preprint, 2023.
+9. J. M. Hammersley, "On estimating restricted parameters," *JRSS Series B*, vol. 12, no. 2, 1950.
+10. D. G. Chapman and H. Robbins, "Minimum variance estimation without regularity assumptions," *Annals of Mathematical Statistics*, vol. 22, no. 4, 1951.
