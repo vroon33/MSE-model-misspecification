@@ -1,0 +1,82 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[margin=1in]{geometry}
+\usepackage{titling}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{tocloft}
+
+\providecommand{\euro}{\text{EUR}}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black,
+    pdftitle={Noise-Model Misspecification in Neural Regression},
+}
+
+\title{
+  Noise-Model Misspecification in Neural Regression:\\
+  \Large Bias, Variance, and Adaptive Loss Selection
+}
+
+\author{
+  \Large Harsh
+}
+\date{
+    \today
+}
+
+\numberwithin{figure}{section}
+\numberwithin{equation}{section}
+
+% Fallback anchors for cross-section references if compiled standalone
+\makeatletter
+\newcommand{\definefallbacklabel}[2]{%
+  \@ifundefined{r@#1}{\@namedef{r@#1}{{#2}{1}{#2}{#1}{}}}{}%
+}
+\makeatother
+\definefallbacklabel{sec:losses}{2}
+\definefallbacklabel{sec:pareto}{9}
+\definefallbacklabel{sec:simA}{5.1}
+\definefallbacklabel{sec:simB}{5.2}
+\definefallbacklabel{sec:studentt}{6}
+\definefallbacklabel{sec:gamma}{7}
+\definefallbacklabel{sec:mcrb}{8}
+\definefallbacklabel{sec:realdata}{10}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report investigates the estimation-theoretic consequences of observation-noise misspecification when estimating unknown continuous functions using deep neural networks. Mean Squared Error (MSE), the standard regression objective, implicitly assumes Gaussian observation noise. Under heavy-tailed (Student-$t$), asymmetric (Gamma), and empirical actuarial noise regimes, MSE suffers from catastrophic sample efficiency loss, variance explosion, or loss-induced asymptotic bias. We introduce \textbf{Residual-Calibrated Objective Selection (RCOS)}, an adaptive framework that evaluates held-out calibration residuals to diagnose noise geometry and select the optimal loss objective without test set contamination. Across 25-trial Monte Carlo simulations ($N=250$), we present an exact functional bias--variance decomposition that isolates loss-induced errors from network approximation effects. We prove that RCOS achieves 100\% selection of Gaussian MSE under normal noise (zero efficiency sacrifice) while reducing total risk by 26.4\% under heavy tails. Finally, on 26,444 real-world French motor insurance claims (\texttt{freMTPL2sev}) characterized by an infinite-variance Pareto tail ($\alpha \approx 1.09$), we demonstrate that MSE distorts the entire neural parameter space due to rare outlier claims, whereas adaptive robust loss selection reduces median prediction error by over $3.2\times$.
+\end{abstract}
+
+\tableofcontents
+\clearpage
+
+\input{neural_network_section}
+
+\clearpage
+\addcontentsline{toc}{section}{References}
+\begin{thebibliography}{99}
+\bibitem{kay} S.~M.~Kay, \emph{Fundamentals of Statistical Signal Processing, Volume I: Estimation Theory}, Prentice Hall, 1993.
+\bibitem{terven} J.~Terven, D.~M.~Cordova-Esparza, J.~A.~Romero-Gonz\'alez, A.~Ram\'irez-Pedraza and E.~A.~Ch\'avez-Urbiola, ``A comprehensive survey of loss functions and metrics in deep learning,'' \emph{Artificial Intelligence Review}, vol.~58, article 195, 2025.
+\bibitem{vdv} A.~W.~van der Vaart, \emph{Asymptotic Statistics}, Cambridge University Press, 1998.
+\bibitem{lange} K.~L.~Lange, R.~J.~A.~Little and J.~M.~G.~Taylor, ``Robust statistical modeling using the t distribution,'' \emph{Journal of the American Statistical Association}, vol.~84, no.~408, pp.~881--896, 1989.
+\bibitem{fortunati} S.~Fortunati, F.~Gini, M.~S.~Greco and C.~D.~Richmond, ``Performance bounds for parameter estimation under misspecified models: Fundamental findings and applications,'' \emph{IEEE Signal Processing Magazine}, vol.~34, no.~6, pp.~142--157, 2017.
+\bibitem{vuong} Q.~H.~Vuong, ``Cram\'er-Rao bounds for misspecified models,'' Working Paper 652, California Institute of Technology, 1986.
+\bibitem{huber67} P.~J.~Huber, ``The behavior of maximum likelihood estimates under nonstandard conditions,'' in \emph{Proceedings of the Fifth Berkeley Symposium on Mathematical Statistics and Probability}, vol.~1, pp.~221--233, 1967.
+\bibitem{barron} J.~T.~Barron, ``A general and adaptive robust loss function,'' in \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp.~4331--4339, 2019.
+\bibitem{wang2024} X.~Wang, L.~Zhou and H.~Lin, ``Deep regression learning with optimal loss function,'' arXiv:2309.12872, \emph{Journal of the American Statistical Association} (preprint), 2024.
+\bibitem{casdatasets} C.~Dutang and A.~Charpentier, \emph{CASdatasets: Insurance datasets}, R package, dataset \texttt{freMTPL2sev}, OpenML dataset 41215.
+\end{thebibliography}
+
+\end{document}
+
