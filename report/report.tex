@@ -96,7 +96,9 @@ Section~\ref{sec:sims} checks the results by simulation, including skewed noise.
 sections extend this to two families of noise. Section~\ref{sec:studentt} makes the tails heavier
 with the Student-t family, and Section~\ref{sec:gamma} makes the noise skewed with the gamma family.
 Section~\ref{sec:mcrb} then introduces the misspecified Cram\'er--Rao bound, which is the tight bound
-for an estimator built on a wrong noise model and explains all the earlier results in one formula.
+for an estimator built on a wrong noise model and explains all the earlier results in one formula. It
+also extends that formula to linear regression with five losses and five noises, and studies which
+estimators the bound applies to, how tight it is at finite $N$, and how well it can be estimated from data.
 Section~\ref{sec:pareto} looks at Pareto noise, where the regularity conditions behind these bounds
 fail, and Section~\ref{sec:realdata} applies the same ideas to real insurance claim data.
 
@@ -1105,23 +1107,32 @@ Define, at the pseudo-true value, the two quantities~\cite[eqs.~(2), (3)]{fortun
 \]
 Both are computed with the assumed model inside and the true density outside. $\mathcal{A}$ is the
 average curvature of the assumed log-likelihood, and $\mathcal{B}$ is the variance of the assumed
-score. An estimator $\hat\theta$ derived under the assumed model is called MS-unbiased if
-$E_p[\hat\theta] = \theta_0$. Theorem 1 of~\cite{fortunati}, due to Vuong~\cite{vuong}, states that
-every MS-unbiased estimator from $N$ i.i.d.\ samples satisfies
+score. Note that $\theta_0 = \theta_0(p)$ depends on the true density. Following
+Vuong~\cite{vuong} and~\cite{fortunati2016}, an estimator $\hat\theta$ is called MS-unbiased if
+\[
+  E_p[\hat\theta] = \theta_0(p) \qquad \text{for every } p \text{ in the family } \mathcal{P}
+\]
+of true densities for which the assumed model is regular, and not only for the one $p$ that
+generated our data. Theorem 1 of~\cite{fortunati}, due to Vuong~\cite{vuong}, states that every
+MS-unbiased estimator from $N$ i.i.d.\ samples satisfies
 \begin{equation}
   \operatorname{Var}(\hat\theta) \geq \text{MCRB} = \frac{1}{N}\,\frac{\mathcal{B}}{\mathcal{A}^2}.
   \label{eq:mcrb}
 \end{equation}
 For a vector parameter the right side is $\frac1N \mathcal{A}^{-1}\mathcal{B}\mathcal{A}^{-1}$, which is
-why it is often called the sandwich formula.
+why it is often called the sandwich formula. The words ``for every $p$'' matter, and we return to them
+in Section~\ref{sec:mcrb-class}, where we show that without them the bound is false.
 
 Two facts make this bound useful. First, if the assumed model is correct, then $\theta_0$ is the
 true parameter and $\mathcal{B} = -\mathcal{A}$ is the Fisher information, so \eqref{eq:mcrb} becomes
 $1/(N\mathcal{B})$, the ordinary CRLB. The MCRB is a generalisation, not a different theory. Second,
-Theorem 2 of~\cite{fortunati} states that the MLE computed under the assumed model is asymptotically
-MS-unbiased and its variance tends to the MCRB. So the MCRB is not only a lower bound for the wrong-model
-estimator, it is the variance that estimator actually has for large $N$. This is what makes it a
-tight bound.
+Theorem 2 of~\cite{fortunati}, due to Huber~\cite{huber67} and White~\cite{white}, states that the
+MLE computed under the assumed model, the mismatched MLE (MML), converges to $\theta_0$ and that
+$\sqrt N(\hat\theta - \theta_0)$ tends in distribution to a Gaussian with variance
+$\mathcal{B}/\mathcal{A}^2$. So the MCRB is not only a lower bound, it is the variance the wrong-model
+estimator actually has for large $N$. This is the sense in which it is a tight bound: it is
+attained asymptotically by the MML~\cite{fortunati}. It is not, in general, a bound that holds at every
+$N$ for every estimator one might build, as Section~\ref{sec:mcrb-class} shows.
 
 \subsection{Our earlier formulas are MCRBs}
 
@@ -1169,6 +1180,80 @@ square error about the true value has an extra bias term~\cite[Section~3.4]{fort
 \]
 For the median under skewed noise the bias is $\operatorname{median}(w)$. The MCRB shrinks like $1/N$
 but the bias does not, so for large $N$ the bias dominates.
+
+\subsection{Which estimators the bound applies to}
+\label{sec:mcrb-class}
+
+\paragraph{A paradox.} Take Laplace noise and the Gaussian model. The pseudo-true value is
+$A_0 = A$, and $\text{MCRB}_{\text{mean}} = \operatorname{Var}(w)/N = 2b^2/N$. The sample median is also
+unbiased for $A_0 = A$, since the noise is symmetric, and its variance is about $b^2/N$, half of this
+MCRB (Section~\ref{sec:median}). If \eqref{eq:mcrb} held for every estimator with
+$E_p[\hat\theta] = \theta_0$ at the one true $p$, the median would violate it. The same happens at small
+$N$ for the median and its own Laplace-model MCRB: under Gaussian noise its variance is about
+$1.4\,\sigma^2/N$ at $N = 10$ (Figure~\ref{fig:simA}), below $\text{MCRB}_{\text{median}} =
+(\pi/2)\,\sigma^2/N$. Neither case is a contradiction. Both estimators are unbiased for $\theta_0$ at
+this $p$, but not for $\theta_0(p)$ as $p$ varies, and that is what the theorem needs. Fortunati et
+al.~\cite{fortunati2016} make the same distinction, Richmond and Horowitz~\cite{richmond} note that
+their own derivation restricts the class further, and Khatib et al.~\cite{khatib2026} have recently
+given an explicit description of this class.
+
+\paragraph{Where ``for every $p$'' enters the proof.} We give a short proof for one parameter, which shows
+exactly which estimators are covered. Write $s(x) = \partial_\theta \ln f(x\mid\theta)|_{\theta_0}$ for the
+assumed score at the pseudo-true value, so that $E_p[s] = 0$ by the definition of $\theta_0$. Move the
+true density a little in a bounded direction $g$ with $E_p[g] = 0$ (an unbounded direction, such as
+$g = w$ below, is handled by truncating it and letting the truncation point grow),
+\[
+  p_t(x) = p(x)\,\bigl(1 + t\,g(x)\bigr),
+\]
+and let $\theta_0(t)$ be the pseudo-true value under $p_t$, which solves $E_{p_t}[\partial_\theta\ln
+f(x\mid\theta)] = 0$. Differentiating this at $t = 0$,
+\[
+  E_p[s\,g] + E_p\!\left[\partial^2_\theta \ln f\right]\theta_0'(0) = 0
+  \quad\Longrightarrow\quad
+  \theta_0'(0) = E_p[\phi\, g], \qquad \phi(x) = -\frac{s(x)}{\mathcal{A}}.
+\]
+The function $\phi$ is the influence function of $\theta_0$. Now suppose $E_{p_t}[\hat\theta] =
+\theta_0(t)$ for all small $t$. The joint density of the $N$ samples is $\prod_n p(x_n)(1 + t g(x_n))$, so
+differentiating at $t = 0$ gives
+\[
+  E_p\Bigl[(\hat\theta - \theta_0)\sum_{n} g(x_n)\Bigr] = \theta_0'(0) = E_p[\phi\,g].
+\]
+By the Cauchy--Schwarz inequality, and since the $g(x_n)$ are independent with zero mean,
+\[
+  \bigl(E_p[\phi\,g]\bigr)^2 \leq \operatorname{Var}(\hat\theta)\cdot N\,E_p[g^2].
+\]
+This holds for every direction $g$, and the strongest version is at $g = \phi$, which gives
+\[
+  \operatorname{Var}(\hat\theta) \geq \frac{E_p[\phi^2]}{N} = \frac{1}{N}\,\frac{\mathcal{B}}{\mathcal{A}^2},
+\]
+the MCRB. So the bound only needs unbiasedness along one direction, $g \propto s$, but it does need
+it in that direction. In the language of semiparametric statistics this is the efficiency bound for the
+functional $\theta_0(p)$ when nothing is assumed about $p$~\cite[Ch.~25]{vdv}, and the MCRB is the
+variance of the influence function~\cite{buja}.
+
+\paragraph{The median fails the condition.} For the Gaussian model, $\theta_0(p) = E_p[x]$ and $\phi = w$.
+Along $p_t = p\,(1 + t w)$ the pseudo-true value moves at rate $\theta_0'(0) = E[w^2] = 2b^2$ for Laplace
+noise. The median of $p_t$ solves $\int_{-\infty}^{m(t)} p_t = \tfrac12$, and differentiating,
+\[
+  m'(0) = -\frac{E[w\,\mathbf{1}\{w < 0\}]}{p_w(0)} = \frac{E|w|/2}{p_w(0)} = \frac{b/2}{1/(2b)} = b^2 .
+\]
+For large $N$ the median follows the median of $p_t$, so its mean moves at rate $b^2$, not $2b^2$. It is
+not MS-unbiased for the Gaussian model, so $\text{MCRB}_{\text{mean}}$ says nothing about it. The sample
+mean on the other hand has $E_p[\bar x] = E_p[x]$ exactly, for every $p$ and every $N$, which is why its
+variance equals its MCRB exactly at every $N$.
+
+\paragraph{Consequences.} Three points follow, and we use them in the rest of the report.
+\begin{enumerate}
+  \item The MCRB of one loss is not a floor for the estimators of other losses. The common floor for
+        comparing losses is the CRLB of the true noise. By Cauchy--Schwarz it is below every MCRB
+        (Section~\ref{sec:mcrb-reg}).
+  \item The MCRB is tight in the sense that the MML attains it as $N \to \infty$. At finite $N$ the
+        MML is generally not exactly MS-unbiased, and its variance can be above or below its MCRB
+        (Section~\ref{sec:mcrb-tight}).
+  \item Since the CRLB of the true noise can be attained without knowing the noise shape when the noise
+        is symmetric (Stone's adaptive estimator~\cite{stone1975}), the gap $\text{MCRB}/\text{CRLB}$ is a
+        price paid for fixing the loss in advance, not a limit on what is possible.
+\end{enumerate}
 
 \subsection{A mistake in the variance}
 
@@ -1317,6 +1402,305 @@ small-sample effect of Section~\ref{sec:simA}, since the MCRB, like the CRLB, is
 $N$ grows. Wherever a CRLB exists, it lies below the MCRB, and the distance between them is the cost
 of using a loss that does not match the noise.
 
+\subsection{The sandwich for regression with robust losses}
+\label{sec:mcrb-reg}
+
+So far every MCRB was for a single parameter and only for the mean and the median. The plan of the
+project asks for more: the regression model with an intercept and a slope, five losses, five noises,
+and a prediction for every pair before any simulation. In this section we derive that prediction and
+test it. The code is in \texttt{Classic\_sim/mcrb.py} and \texttt{Classic\_sim/sim\_J\_mcrb\_regression.py},
+with unit tests in \texttt{tests/test\_mcrb.py}.
+
+\paragraph{The model and the estimators.} We observe $y_i = \mathbf{x}_i^\top\boldsymbol\theta + w_i$,
+$i = 1,\dots,N$, with $\mathbf{x}_i = [1, x_i]^\top$, $x_i \sim \operatorname{Uniform}(-2, 2)$ drawn once and then held
+fixed, and $\boldsymbol\theta = [1, 2]^\top$. A loss $\rho$ gives the estimator
+\[
+  \hat{\boldsymbol\theta} = \arg\min_{\boldsymbol\theta}\sum_{i=1}^N \rho\bigl(y_i - \mathbf{x}_i^\top\boldsymbol\theta\bigr),
+\]
+which is the MLE of the assumed noise $f \propto e^{-\rho}$, so it is the MML of Section~\ref{sec:mcrb}.
+We use five losses, written with $\psi = \rho'$:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Loss & $\psi(r)$ & Assumed noise \\
+\midrule
+MSE & $r$ & Gaussian \\
+MAE & $\operatorname{sign}(r)$ & Laplace \\
+Huber & $\max(-\delta, \min(r, \delta))$ & least favourable contaminated Gaussian~\cite{huber64} \\
+$t_3$-loss & $4r/(3c^2 + r^2)$ & Student-$t$, $\nu = 3$, scale $c$ \\
+Cauchy-loss & $2r/(c^2 + r^2)$ & Cauchy, scale $c$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The true noise is Gaussian ($\sigma = 1$), Laplace ($b = 1$), Student-$t_3$ ($s = 1$), Cauchy ($\gamma = 1$) or the
+contaminated Gaussian $0.9\,\mathcal N(0,1) + 0.1\,\mathcal N(0, 25)$ used in \texttt{sim\_H}. All five are
+symmetric, and every $\psi$ is odd, so $E[\psi(w)] = 0$ and the pseudo-true parameter of every loss is the
+true $\boldsymbol\theta$. This is Regime A of the project plan.
+
+\paragraph{Sign convention.} We write $\lambda = E_p[\psi'(w)]$ and $\kappa = E_p[\psi(w)^2]$. Since
+$\ln f = -\rho + \text{const}$, the assumed score of one sample is $\psi(r_i)\mathbf{x}_i$ and its Hessian is
+$-\psi'(r_i)\mathbf{x}_i\mathbf{x}_i^\top$. So, summing over the samples, the matrices of
+Section~\ref{sec:mcrb} are $-\lambda\mathbf{X}^\top\mathbf{X}$ and $\kappa\mathbf{X}^\top\mathbf{X}$. The two minus signs
+cancel in the sandwich, and we work with the positive matrices $\mathbf{A} = \lambda\mathbf{X}^\top\mathbf{X}$ and
+$\mathbf{B} = \kappa\mathbf{X}^\top\mathbf{X}$. The same convention is written at the top of \texttt{mcrb.py}.
+
+\paragraph{Derivation.} The estimator solves $\sum_i \psi(y_i - \mathbf{x}_i^\top\hat{\boldsymbol\theta})\,\mathbf{x}_i = \mathbf 0$.
+Writing $y_i - \mathbf{x}_i^\top\hat{\boldsymbol\theta} = w_i - \mathbf{x}_i^\top(\hat{\boldsymbol\theta} - \boldsymbol\theta)$ and expanding
+$\psi$ to first order,
+\[
+  \mathbf 0 \approx \sum_i \psi(w_i)\,\mathbf{x}_i - \Bigl(\sum_i \psi'(w_i)\,\mathbf{x}_i\mathbf{x}_i^\top\Bigr)(\hat{\boldsymbol\theta} - \boldsymbol\theta).
+\]
+For large $N$ the matrix in brackets is close to $\lambda\mathbf{X}^\top\mathbf{X}$, so
+$\hat{\boldsymbol\theta} - \boldsymbol\theta \approx (\lambda\mathbf{X}^\top\mathbf{X})^{-1}\sum_i\psi(w_i)\mathbf{x}_i$. The terms of the sum are
+independent with zero mean and covariance $\kappa\,\mathbf{x}_i\mathbf{x}_i^\top$, so
+\begin{equation}
+  \text{MCRB} = \mathbf{A}^{-1}\mathbf{B}\mathbf{A}^{-1} = \frac{\kappa}{\lambda^2}\,(\mathbf{X}^\top\mathbf{X})^{-1},
+  \qquad
+  \text{CRLB} = \frac{1}{I_{\text{loc}}}\,(\mathbf{X}^\top\mathbf{X})^{-1},
+  \label{eq:mcrb-reg}
+\end{equation}
+where $I_{\text{loc}} = E[u(w)^2]$, $u = -p_w'/p_w$, is the location Fisher information of the true noise. With
+$\mathbf{X} = \mathbf 1$ this is the DC level, $\mathbf{X}^\top\mathbf{X} = N$. For MAE, $\psi'$ does not exist at $0$, and as in
+Section~\ref{sec:mcrb} we use $\lambda = \frac{d}{dt}E[\operatorname{sign}(w + t)]|_{t=0} = 2p_w(0)$. For Huber,
+$\lambda = P(|w| \leq \delta)$ and $\kappa = E[\min(w^2, \delta^2)]$.
+
+Both bounds are multiples of the same matrix, so the efficiency ratio
+\[
+  \frac{\operatorname{tr}\text{MCRB}}{\operatorname{tr}\text{CRLB}} = \frac{\kappa\,I_{\text{loc}}}{\lambda^2}
+\]
+does not depend on the design. It is one number per loss and noise.
+
+\paragraph{No loss beats the CRLB.} Integrating by parts, $\lambda = \int\psi' p_w = -\int \psi\,p_w' = E[\psi\,u]$.
+By the Cauchy--Schwarz inequality $\lambda^2 \leq E[\psi^2]\,E[u^2] = \kappa\,I_{\text{loc}}$, so every efficiency
+ratio is at least $1$, with equality exactly when $\psi$ is proportional to $u$, that is when the loss is the
+negative log-likelihood of the true noise. This is the regression form of the statement that the MCRB
+of the matched model is the CRLB.
+
+\paragraph{Skewed noise.} If the noise is skewed, $E[\psi(w - t)] = 0$ at some $t^* \neq 0$ that depends on the
+loss, the mean of $w$ for MSE and its median for MAE. Because the first column of $\mathbf{X}$ is all ones, the
+pseudo-true parameter is then $\boldsymbol\theta + t^*\mathbf{e}_1$. Only the intercept moves, and every loss still
+estimates the true slope. This is the regression version of Section~\ref{sec:simB}.
+
+\paragraph{Choosing the scale.} The robust losses need a scale, and the result depends on it. The plan
+of the project asks for a rule fixed before the simulation. Ours is that each loss uses the scale that
+makes it the exact MLE when its own noise family is true, estimated from the median absolute residual
+of a preliminary LAD fit. Since the median of $|w|$ is the upper quartile for symmetric noise, this gives
+$\delta = 1.345\,\text{MAD}/0.6745$ for Huber, which is the classical $95\%$ Gaussian efficiency
+point~\cite{huberronchetti}, $c = \text{MAD}/0.765$ for the $t_3$-loss and $c = \text{MAD}$ for the Cauchy-loss. The
+scale is estimated, but this does not change \eqref{eq:mcrb-reg}. The joint estimating equations for
+$(\boldsymbol\theta, c)$ have the cross term $E[\partial_c\psi(w; c)]\,\mathbf{x}_i$, and for symmetric noise
+$\partial_c\psi(\cdot\,; c)$ is an odd function, so this term is zero. The matrix $\mathbf{A}$ of the joint problem
+is block diagonal, and the plug-in scale leaves the asymptotic covariance of $\hat{\boldsymbol\theta}$
+unchanged.
+
+\paragraph{Computing the estimates.} The MSE estimate is OLS. The others start from the LAD estimate,
+which is consistent under all five noises (OLS is not, under Cauchy noise). We then iterate weighted least
+squares with weights $\psi(r)/r$ at the fixed scale. For the $t_3$ and Cauchy losses this iteration is the EM
+algorithm of Lange et al.~\cite{lange}, so the loss never increases. The unit tests check that the LAD
+iteration matches the exact linear-programming solution, that every estimate has zero gradient of
+its own loss and is at least as good as a general-purpose optimiser, and that the estimates are
+regression equivariant. None of the $125000$ fits at $N = 100$ failed to converge.
+
+\paragraph{Prediction.} Table~\ref{tab:simJ-pred} gives $\kappa I_{\text{loc}}/\lambda^2$ for every pair, computed by
+numerical integration before the simulation.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccccc}
+\toprule
+Loss & Gaussian & Laplace & Student-$t_3$ & Cauchy & Contaminated \\
+\midrule
+MSE         & $\mathbf{1}$ & $\mathbf{2}$ & $\mathbf{2}$ & $\infty$ & 2.714 \\
+MAE         & 1.571 & $\mathbf{1}$ & 1.234 & 1.234 & 1.481 \\
+Huber       & 1.053 & 1.433 & 1.058 & 1.757 & 1.100 \\
+$t_3$-loss  & 1.143 & 1.255 & $\mathbf{1}$ & 1.177 & 1.071 \\
+Cauchy-loss & 1.582 & 1.154 & 1.146 & $\mathbf{1}$ & 1.379 \\
+\midrule
+$1/I_{\text{loc}}$ & 1 & 1 & 1.5 & 2 & 1.253 \\
+\bottomrule
+\end{tabular}
+\caption{Predicted efficiency ratio $\operatorname{tr}\text{MCRB}/\operatorname{tr}\text{CRLB} = \kappa I_{\text{loc}}/\lambda^2$. Bold
+entries are the correctness gates of the project plan, whose values are exact.}
+\label{tab:simJ-pred}
+\end{table}
+
+Each loss is best under its own noise, where the ratio is $1$, and no loss is best everywhere. MSE is the
+only loss that becomes unusable, under Cauchy noise, where $\kappa = E[w^2] = \infty$, so the Gaussian model is not
+regular with respect to the truth and no MCRB exists. Huber at $1.345$ loses only $5\%$ under Gaussian noise
+and is the best of the five under contaminated noise apart from the $t_3$-loss. The $t_3$-loss is never worse
+than $1.26$, and the Cauchy-loss pays more than MAE under Gaussian noise.
+
+\paragraph{Simulation.} For each pair we ran $5000$ trials with $N = 100$ and measured the bias, the
+covariance of the estimates, and the ratio $\operatorname{tr}\widehat{\operatorname{Cov}}/\operatorname{tr}\text{CRLB}$. The Monte
+Carlo standard error of each ratio comes from $20$ batches of $250$ trials.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccccc}
+\toprule
+Loss & Gaussian & Laplace & Student-$t_3$ & Cauchy & Contaminated \\
+\midrule
+MSE         & 1.002 & 1.990 & 1.903 & -- & 2.706 \\
+MAE         & 1.541 & 1.272 & 1.251 & 1.345 & 1.484 \\
+Huber       & 1.054 & 1.425 & 1.069 & 1.892 & 1.119 \\
+$t_3$-loss  & 1.118 & 1.298 & 1.010 & 1.235 & 1.059 \\
+Cauchy-loss & 1.599 & 1.247 & 1.156 & 1.056 & 1.364 \\
+\bottomrule
+\end{tabular}
+\caption{Measured $\operatorname{tr}\widehat{\operatorname{Cov}}/\operatorname{tr}\text{CRLB}$ at $N = 100$, $5000$ trials. The Monte Carlo
+standard errors are between $0.011$ and $0.043$. MSE under Cauchy noise has no variance, and the
+interquartile range of its slope estimates was $1.51$.}
+\label{tab:simJ-meas}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\linewidth]{../figures/simJ_mismatch_matrix.png}
+\caption{Predicted and measured efficiency ratio for every loss and noise, $N = 100$.}
+\label{fig:simJ-matrix}
+\end{figure}
+
+Every estimate was unbiased, with all biases below $0.005$ in absolute value. Of the $24$ cells with a
+finite prediction, $16$ agree within two standard errors. The gates for MSE under Gaussian and Laplace
+noise and for the $t_3$-loss under $t_3$ noise are on target. The MSE gate under $t_3$ noise measured $1.903$,
+below $2$. This noise has an infinite fourth moment, so, as in Section~\ref{sec:studentt}, the sample
+variance of the estimates is itself very noisy and tends to come out low, and the batch standard error
+understates the uncertainty. The remaining seven differences are all in the same direction, measured
+above predicted, and all involve the non-smooth MAE, one of the two redescending losses ($t_3$ and
+Cauchy), or Cauchy noise. They are finite-sample effects, not
+errors in the prediction. The MAE gate under Laplace noise is $1.27$ at $N = 100$, the same slow approach to
+the bound that the median showed in Section~\ref{sec:simA}, and Section~\ref{sec:mcrb-tight} follows it to
+$1.04$ at $N = 2000$. Repeating the five cells with the largest gaps at $N = 1000$, with $2000$ trials,
+gave ratios to the MCRB of $0.98$ to $1.04$, each within two standard errors of $1$. These were the five
+cells with a gap that are not followed in Section~\ref{sec:mcrb-tight}: Huber, MAE and the $t_3$-loss under
+Cauchy noise, and the $t_3$-loss and the Cauchy-loss under Laplace noise. The measured covariance matrices
+also agree with the predicted matrices $\kappa\lambda^{-2}(\mathbf{X}^\top\mathbf{X})^{-1}$ entry by entry. The relative
+Frobenius error is below $6\%$ in every cell except four of the slow ones (MAE under Laplace and Cauchy
+noise, Huber under Cauchy noise, the Cauchy-loss under Laplace noise), where it is $8\%$ to $27\%$.
+
+\subsection{How tight is the MCRB at finite $N$}
+\label{sec:mcrb-tight}
+
+The MCRB is an asymptotic statement. To see how fast it becomes accurate, we followed six cells for $N$
+from $10$ to $2000$, with $4000$ trials each, and measured $\operatorname{tr}\widehat{\operatorname{Cov}}/\operatorname{tr}\text{MCRB}$, which
+should tend to $1$. Figure~\ref{fig:simJ-tight} shows the result.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{../figures/simJ_tightness_vs_N.png}
+\caption{Measured variance divided by the MCRB against $N$, for six loss and noise pairs. The error bars
+are two Monte Carlo standard errors.}
+\label{fig:simJ-tight}
+\end{figure}
+
+Three behaviours appear.
+\begin{enumerate}
+  \item \textbf{Exact at every $N$.} MSE under Laplace noise stays at $1$ from $N = 10$. OLS is linear in
+        the data and $E_p[\hat{\boldsymbol\theta}] = \boldsymbol\theta_0(p)$ for every $p$ and every $N$, so it is exactly
+        MS-unbiased and its covariance is the MCRB exactly.
+  \item \textbf{Above the bound, slowly approaching it.} MAE under Laplace noise starts at $1.94$ at $N = 10$
+        and reaches $1.04$ at $N = 2000$. The Cauchy-loss under Cauchy noise starts at $3.0$ at $N = 10$, where a
+        non-convex loss and a noisy scale estimate from ten samples combine, and is within $4\%$ of $1$ from
+        $N = 200$. The Huber loss under contaminated noise and the $t_3$-loss under Gaussian noise are within $4\%$
+        from $N = 50$.
+  \item \textbf{Below the bound.} MAE under Gaussian noise is below its MCRB at small $N$. A separate run with
+        $40000$ trials gave $0.942 \pm 0.006$ at $N = 10$ and $0.987 \pm 0.005$ at $N = 20$. This is the regression
+        version of the median result in Figure~\ref{fig:simA}, and it is the example of
+        Section~\ref{sec:mcrb-class}. The MCRB is attained in the limit, but it is not a finite-sample lower
+        bound for the MML.
+\end{enumerate}
+Five of the $192000$ fits in this experiment did not meet the convergence tolerance in $500$ iterations.
+So in this design, with two parameters, the MCRB predicts the variance within a few percent from about
+$N = 100$ for the smooth losses, but the non-smooth MAE needs about $N = 1000$, and the heavy-tailed
+Cauchy case needs $N \geq 200$.
+
+\subsection{Estimating the MCRB from data}
+\label{sec:mcrb-data}
+
+In practice the true noise is unknown, so the MCRB must be estimated. Replacing the expectations in
+\eqref{eq:mcrb-reg} by averages over the residuals $\hat r_i$ gives the sample MCRB~\cite[Section~4.1]{fortunati},
+\[
+  \widehat{\operatorname{Cov}} = \hat{\mathbf{A}}^{-1}\hat{\mathbf{B}}\hat{\mathbf{A}}^{-1}, \qquad
+  \hat{\mathbf{A}} = \sum_i \psi'(\hat r_i)\,\mathbf{x}_i\mathbf{x}_i^\top, \qquad
+  \hat{\mathbf{B}} = \sum_i \psi(\hat r_i)^2\,\mathbf{x}_i\mathbf{x}_i^\top .
+\]
+For OLS this is White's heteroscedasticity-consistent estimator HC0~\cite{white80}, and it was already
+used for the claims data in Section~\ref{sec:realdata}. We check whether its standard errors give
+$95\%$ intervals that really cover the true value $95\%$ of the time. The code is in
+\texttt{Classic\_sim/sim\_K\_sandwich\_coverage.py}, with $5000$ trials per setting.
+
+\paragraph{Heteroscedastic noise.} Let $y_i = 1 + 2x_i + \sigma(x_i)z_i$ with $\sigma(x) = 0.5 + |x|$, so the noise is
+larger at the edges of the design, and fit OLS. The assumed model is Gaussian with constant variance.
+The mean is correct, so the pseudo-true slope is the true one, but the MCRB is now
+\[
+  \text{MCRB} = (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\boldsymbol\Omega\mathbf{X}(\mathbf{X}^\top\mathbf{X})^{-1}, \qquad
+  \boldsymbol\Omega = \operatorname{diag}(\sigma(x_i)^2),
+\]
+which is not a multiple of $(\mathbf{X}^\top\mathbf{X})^{-1}$. The usual standard error assumes it is. For the slope, $N$
+times the measured variance was between $2.7$ and $4.3$ and matched $N$ times the MCRB to within $7\%$ in every
+setting, while the classical formula $\bar\sigma^2(\mathbf{X}^\top\mathbf{X})^{-1}$, with $\bar\sigma^2$ the average noise
+variance (the pseudo-true variance of the assumed model), gave only $1.9$ to $2.6$. Table~\ref{tab:simK-het}
+shows the coverage.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrccc}
+\toprule
+$z$ & $N$ & Classical SE & HC0 (sample MCRB) & HC3 \\
+\midrule
+Gaussian & 20   & 0.877 & 0.906 & 0.949 \\
+         & 50   & 0.902 & 0.946 & 0.957 \\
+         & 200  & 0.881 & 0.946 & 0.951 \\
+         & 1000 & 0.877 & 0.950 & 0.950 \\
+Laplace  & 20   & 0.875 & 0.901 & 0.947 \\
+         & 50   & 0.870 & 0.934 & 0.952 \\
+         & 200  & 0.883 & 0.947 & 0.952 \\
+         & 1000 & 0.883 & 0.951 & 0.951 \\
+\bottomrule
+\end{tabular}
+\caption{Coverage of nominal $95\%$ intervals for the OLS slope under heteroscedastic noise, $5000$ trials.}
+\label{tab:simK-het}
+\end{table}
+
+The classical intervals cover about $88\%$ of the time at every $N$, because their variance is about a third
+too small and more data does not fix that. The sample MCRB is correct for large $N$ but undercovers at
+$N = 20$, because the residuals are smaller than the errors. The HC3 version~\cite{mackinnonwhite}, which divides
+$\hat r_i^2$ by $(1 - h_{ii})^2$ with $h_{ii}$ the leverage, is close to $95\%$ already at $N = 20$.
+
+\paragraph{The noise variance.} We return to the example of Section~\ref{sec:mcrb}, $\hat\theta = \frac1N\sum_n x[n]^2$
+with a Gaussian model. Trusting the model gives the standard error $\sqrt{2/N}\,\hat\theta$, and the sample
+MCRB gives $\sqrt{(m_4 - \hat\theta^2)/N}$, where $m_4$ is the sample fourth moment.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrcc}
+\toprule
+True noise & $N$ & Gaussian-model SE & Sample-MCRB SE \\
+\midrule
+Gaussian            & 1000 & 0.951 & 0.950 \\
+Laplace             & 50   & 0.778 & 0.859 \\
+                    & 1000 & 0.797 & 0.945 \\
+Student-$t$, $\nu = 10$ & 1000 & 0.891 & 0.940 \\
+Student-$t$, $\nu = 5$  & 50   & 0.776 & 0.844 \\
+                    & 1000 & 0.735 & 0.924 \\
+\bottomrule
+\end{tabular}
+\caption{Coverage of nominal $95\%$ intervals for the noise variance, $5000$ trials.}
+\label{tab:simK-var}
+\end{table}
+
+Under Laplace noise the Gaussian-model standard error is $\sqrt{8/20} = 0.63$ times the true one, from
+Section~\ref{sec:mcrb}, which predicts a coverage of $2\Phi(1.96\times0.63) - 1 = 0.785$, and we measured
+$0.78$ to $0.80$ at every $N$. The sample MCRB reaches $0.945$ at $N = 1000$. Under $t_5$ noise it is still at
+$0.92$ at $N = 1000$. The sample MCRB needs the fourth moment, and for $t_5$ the eighth moment is infinite, so
+$m_4$ converges very slowly. Estimating the bound is harder than knowing it.
+
+\paragraph{Huber regression.} Finally, for the Huber loss under Gaussian, Laplace, $t_3$ and contaminated
+noise, with $N = 50$, $200$ and $1000$, the average sample sandwich was within $4\%$ of the true MCRB, and the
+coverage of the sandwich intervals was between $0.935$ and $0.954$. The Huber $\psi$ is bounded, so the
+sample sandwich does not depend on high moments of the noise, which is why it behaves better than in the
+variance example.
+
 \subsection{Summary}
 
 The CRLB tells us what is possible with the right noise model. The MCRB tells us what we actually
@@ -1325,6 +1709,15 @@ price of the wrong assumption, which is exactly the efficiency ratio of the earl
 pseudo-true value explains where a wrong-model estimator ends up, including the median's shift under
 skewed noise. For variance estimation, trusting the Gaussian model gives a number that is not even a
 valid bound when the noise has heavy tails, while the MCRB gives the correct variance.
+
+The regression sections extend this to every pair of five losses and five noises, with one formula,
+$\kappa\lambda^{-2}(\mathbf{X}^\top\mathbf{X})^{-1}$, that predicts every cell of the mismatch matrix before simulation, and the
+correctness gates of the project plan are met. Three caveats come with it. The MCRB binds only
+estimators that are MS-unbiased over the whole family of true densities, so it is not a floor for the
+estimators of other losses, and the common reference is the CRLB of the true noise. It is tight in the
+limit, but at finite $N$ the variance can sit above it (MAE, the Cauchy-loss) or below it (MAE under Gaussian
+noise). And when it is estimated from data, the sandwich gives correct intervals where the model-based
+formula does not, but only once $N$ is large enough for the moments it needs, and HC3 helps at small $N$.
 
 \section{When the bound breaks, Pareto noise}
 \label{sec:pareto}
@@ -1678,7 +2071,25 @@ regression. These steps connect this section to the nonlinear models of the proj
   scikit-learn documentation example,
   \url{https://scikit-learn.org/stable/auto_examples/linear_model/plot_tweedie_regression_insurance_claims.html}.
 \bibitem{barron} J.~T.~Barron, ``A general and adaptive robust loss function,'' in \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp.~4331--4339, 2019.
-\bibitem{wang2024} X.~Wang, L.~Zhou and H.~Lin, ``Deep regression learning with optimal loss function,'' arXiv:2309.12872, \emph{Journal of the American Statistical Association} (preprint), 2024.
+\bibitem{fortunati2016} S.~Fortunati, F.~Gini and M.~S.~Greco, ``The misspecified Cram\'er-Rao bound and its
+  application to scatter matrix estimation in complex elliptically symmetric distributions,''
+  \emph{IEEE Transactions on Signal Processing}, vol.~64, no.~9, pp.~2387--2399, 2016.
+\bibitem{khatib2026} M.~Khatib, N.~Harel, J.~Tabrikian and T.~Routtenberg, ``Revisiting the misspecified
+  Cram\'er-Rao bound,'' arXiv:2605.20739, 2026.
+\bibitem{huber64} P.~J.~Huber, ``Robust estimation of a location parameter,'' \emph{Annals of Mathematical
+  Statistics}, vol.~35, no.~1, pp.~73--101, 1964.
+\bibitem{huberronchetti} P.~J.~Huber and E.~M.~Ronchetti, \emph{Robust Statistics}, 2nd ed., Wiley, 2009.
+\bibitem{white80} H.~White, ``A heteroskedasticity-consistent covariance matrix estimator and a direct test
+  for heteroskedasticity,'' \emph{Econometrica}, vol.~48, no.~4, pp.~817--838, 1980.
+\bibitem{mackinnonwhite} J.~G.~MacKinnon and H.~White, ``Some heteroskedasticity-consistent covariance matrix
+  estimators with improved finite sample properties,'' \emph{Journal of Econometrics}, vol.~29, no.~3,
+  pp.~305--325, 1985.
+\bibitem{stone1975} C.~J.~Stone, ``Adaptive maximum likelihood estimators of a location parameter,''
+  \emph{Annals of Statistics}, vol.~3, no.~2, pp.~267--284, 1975.
+\bibitem{buja} A.~Buja, L.~Brown, R.~Berk, E.~George, E.~Pitkin, M.~Traskin, K.~Zhang and L.~Zhao, ``Models as
+  approximations I: Consequences illustrated with linear regression,'' \emph{Statistical Science}, vol.~34,
+  no.~4, pp.~523--544, 2019.
+\bibitem{wang2024} X.~Wang, L.~Zhou and H.~Lin, ``Deep regression learning with optimal loss function,'' \emph{Journal of the American Statistical Association}, vol.~120, no.~550, pp.~1305--1317, 2025 (online 2024; arXiv:2309.12872).
 \end{thebibliography}
 
 \end{document}

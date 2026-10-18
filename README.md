@@ -34,6 +34,7 @@ This unified document establishes the complete theoretical and empirical synthes
   - [Simulation G: Real Actuarial Claims Exploration (`freMTPL2sev`)](#simulation-g-real-actuarial-claims-exploration-fremtpl2sev)
   - [Simulation H: Extended Noise Models](#simulation-h-extended-noise-models)
   - [Simulation I: Enhanced Empirical Modeling](#simulation-i-enhanced-empirical-modeling)
+  - [Simulations J and K: The Regression MCRB, Its Tightness and Its Estimation](#simulations-j-and-k-the-regression-mcrb-its-tightness-and-its-estimation-bhuvi)
 - [4. The Neural Network Pathway &amp; Exhaustive Verification](#4-the-neural-network-pathway--exhaustive-verification)
   - [4.1 Why MSE Breaks Down in Deep Neural Networks](#41-why-mse-breaks-down-in-deep-neural-networks)
   - [4.2 The Residual-Calibrated Objective Selection (RCOS) Framework](#42-the-residual-calibrated-objective-selection-rcos-framework)
@@ -511,6 +512,14 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 - **Justification of Plots:**
   - [`figures/simI_spike_adjusted_cdf.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simI_spike_adjusted_cdf.png): Semi-log ECDF vs. Two-Part Model vs. continuous models.
   - [`figures/simI_evt_tail_qq.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simI_evt_tail_qq.png): Log-log Pareto QQ plot confirming extreme tail linearity.
+
+### Simulations J and K: The Regression MCRB, Its Tightness and Its Estimation (Bhuvi)
+
+- **Module:** [`Classic_sim/mcrb.py`](Classic_sim/mcrb.py) contains the noise families, the losses (MSE, MAE, Huber, $t_3$, Cauchy), the population sandwich $\kappa\lambda^{-2}(X^\top X)^{-1}$, vectorised M-estimators (LAD start, MAD scale, IRLS/EM) and the sample sandwich (HC0/HC3). The sign convention is fixed at the top of the file.
+- **Simulation J:** [`Classic_sim/sim_J_mcrb_regression.py`](Classic_sim/sim_J_mcrb_regression.py) runs the 5 × 5 Regime A mismatch matrix for $y = 1 + 2x + w$, predicted vs measured at $N = 100$, plus measured Var/MCRB for $N = 10\dots2000$. It writes `figures/simJ_mismatch_matrix.png` and `figures/simJ_tightness_vs_N.png`.
+- **Simulation K:** [`Classic_sim/sim_K_sandwich_coverage.py`](Classic_sim/sim_K_sandwich_coverage.py) measures the coverage of model-based vs sandwich (sample MCRB) intervals for heteroscedastic OLS, variance estimation and Huber regression. It writes `figures/simK_sandwich_coverage.png`.
+- **Tests:** `python -m unittest discover -s tests -v` runs 14 tests, using stdlib `unittest` only.
+- **Report:** Section 8.5 (which estimators the MCRB binds), 8.8–8.10. **Viva guide and research memo:** [`docs/`](docs/).
 
 ---
 
