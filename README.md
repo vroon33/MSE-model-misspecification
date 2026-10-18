@@ -302,12 +302,14 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 | **Mean (MSE $\to$ Gaussian)**  |          1.000          |      **0.968**      |         2.000         |     **2.007**     |
 | **Median (MAE $\to$ Laplace)** | $\pi/2 \approx 1.571$ |      **1.512**      |         1.000         |     **1.169**     |
 
-- **Sample Size Scaling:**|     $N$     | Mean (Gauss) | Median (Gauss) |         Mean (Laplace)         | Median (Laplace) || :------------: | :----------: | :------------: | :-----------------------------: | :--------------: |
-  | :------------: | :----------: | :------------: | :-----------------------------: | :--------------: |
-  |  **50**  |    0.988    |     1.523     |              1.961              |      1.171      |
-  | **100** |    0.976    |     1.489     |              1.967              |      1.140      |
-  | **500** |    1.016    |     1.582     |              2.002              |      1.048      |
-  | **1000** |    0.967    |     1.557     |              1.972              | **1.055** |
+- **Sample Size Scaling:**
+
+  | $N$ | Mean (Gauss) | Median (Gauss) | Mean (Laplace) | Median (Laplace) |
+  | :---: | :---: | :---: | :---: | :---: |
+  | **50** | 0.988 | 1.523 | 1.961 | 1.171 |
+  | **100** | 0.976 | 1.489 | 1.967 | 1.140 |
+  | **500** | 1.016 | 1.582 | 2.002 | 1.048 |
+  | **1000** | 0.967 | 1.557 | 1.972 | **1.055** |
 - **Justification of Plot [`figures/simA_ratio_vs_N.png`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/figures/simA_ratio_vs_N.png):**
   The Mean curves are completely flat at 1.0 (Gauss) and 2.0 (Laplace) for all $N$ because $\mathrm{Var}(\bar{x}) = \mathrm{Var}(w)/N$ holds algebraically. The Median curves approach asymptotic efficiency (1.0 under Laplace, $\pi/2$ under Gauss) as $N$ increases.
 
@@ -372,7 +374,7 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 
 #### Verification Table (N = 100, 5,000 Trials, θ = 1.0):
 
-| Shape$k$ | Skewness$\frac{2}{\sqrt{k}}$ | Mean Ratio (Pred) | Mean Ratio (Meas) | Gamma MLE (Meas) | Median Limit (Pred) | Median Avg (Meas) |                |
+| Shape $k$ | Skewness $\frac{2}{\sqrt{k}}$ | Mean Ratio (Pred) | Mean Ratio (Meas) | Gamma MLE (Meas) | Median Limit (Pred) | Median Avg (Meas) |
 | :-----------------------------------------: | :---------------: | :---------------: | :--------------: | :-----------------: | :---------------: | :-------------: |
 |                 **1**                 |       2.000       |      No CRLB      |     No CRLB     |       No CRLB       |       0.693       | **0.698** |
 |                 **3**                 |       1.155       |       3.000       | **3.135** |   **1.218**   |       0.674       | **0.686** |
@@ -393,7 +395,7 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 
 #### Verification Table: Fortunati et al. Section 4.2 (Assumed Mean 0, True Mean μ):
 
-| True Mean$\mu$ | Pseudo-True$\theta_0$ | Avg Estimate | $N \cdot \text{CRLB}$ | $N \cdot \text{MCRB}$ (Theory) | $N \cdot \mathrm{Var}$ (Meas) | $N \cdot \text{MSE}$ (Meas) |                  |
+| True Mean $\mu$ | Pseudo-True $\theta_0$ | Avg Estimate | $N \cdot \text{CRLB}$ | $N \cdot \text{MCRB}$ (Theory) | $N \cdot \mathrm{Var}$ (Meas) | $N \cdot \text{MSE}$ (Meas) |
 | :----------------------------------------: | :----------: | :---------------------: | :------------------------------: | :-----------------------------: | :---------------------------: | :---------------: |
 |               **0.0**               |     1.00     |          0.999          |               2.0               |               2.0               |        **1.984**        |  **1.984**  |
 |               **0.5**               |     1.25     |          1.249          |               2.0               |               3.0               |        **2.984**        |  **9.186**  |
@@ -475,8 +477,8 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 
 #### 3. Uniform Noise Super-Efficiency (Δ = √3, Unit Variance):
 
-| Sample Size$N$ | $\mathrm{Var}(\text{Mean})$ (Meas) | $\mathrm{Var}(\text{Midrange})$ (Meas) | Efficiency Advantage ($\mathrm{Var}_{\text{Mean}}/\mathrm{Var}_{\text{Mid}}$) |                  |
-| :--------------: | :----------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :--------------: |
+| Sample Size $N$ | $\mathrm{Var}(\text{Mean})$ (Meas) | $\mathrm{Var}(\text{Midrange})$ (Meas) | Efficiency Advantage ($\mathrm{Var}_{\text{Mean}}/\mathrm{Var}_{\text{Mid}}$) |
+| :--------------: | :----------------------------------: | :------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------: |
 |   **10**   |                0.1006                |                                                           0.0444                                                           | **2.26x** |
 |   **50**   |                0.0198                |                                                           0.0023                                                           | **8.62x** |
 |  **100**  |                0.0099                |                                                           0.0006                                                           | **18.00x** |
@@ -525,8 +527,14 @@ $$
 $$
 
    Because gradients scale linearly with residuals, tail outliers produce massive gradient steps that destabilize shared representation weights across all hidden layers.
-2. **Deep Sandwich Matrix Divergence:**
-   The outer-product gradient matrix $B$ scales with the **fourth moment** $\mathbb{E}[w^4]$. When noise has heavy tails ($\nu \le 4$), $B$ diverges, inflating test variance.
+2. **Deep Sandwich Matrix & Gradient Covariance:**
+   Evaluated at the true function ($r = w$), the expected outer-product gradient covariance matrix is:
+
+$$
+\mathbf{B} = \mathbb{E}[\nabla_\theta \mathcal{L}_{\text{MSE}} \nabla_\theta \mathcal{L}_{\text{MSE}}^\top] = 4\,\mathbb{E}[w^2]\,\mathbb{E}[\nabla_\theta f_\theta(x)\nabla_\theta f_\theta(x)^\top]
+$$
+
+   This scales directly with the **second moment** $\mathbb{E}[w^2] = \sigma_w^2$ (diverging when $\nu \le 2$, as under Cauchy noise). In contrast, the sample variance of the empirical gradient outer products $\mathrm{Var}(\nabla_\theta \mathcal{L} \nabla_\theta \mathcal{L}^\top)$ and mini-batch gradient kurtosis scale with the **fourth moment** $\mathbb{E}[w^4]$. When observation noise exhibits heavy tails ($\nu \le 4$), this fourth moment diverges ($\mathbb{E}[w^4] = \infty$), producing severe gradient noise variance that destabilizes mini-batch SGD.
 
 ---
 
@@ -624,8 +632,8 @@ flowchart TD
 
 #### Out-of-Sample Test RMSE vs. Ground Truth g*(X) (Lower is Better):
 
-| Training Objective        | Gaussian$\mathcal{N}(0, 1)$ | Student-$t$ ($\nu=3$) | Contaminated Gaussian (5%) | Shifted Lognormal |                |
-| :------------------------ | :-------------------------------------------------------: | :------------------------: | :----------------: | :-------------: |
+| Training Objective        | Gaussian $\mathcal{N}(0, 1)$ | Student-$t$ ($\nu=3$) | Contaminated Gaussian (5%) | Shifted Lognormal |
+| :------------------------ | :--------------------------: | :-------------------: | :------------------------: | :---------------: |
 | **MSE ($L_2$)**   |                      **0.270**                      |     0.482 (+44% error)     | 0.401 (+23% error) |      0.693      |
 | **Huber**           |                           0.287                           |           0.367           |  **0.327**  | **0.529** |
 | **MAE ($L_1$)**   |                           0.292                           |      **0.345**      |       0.330       |      0.654      |
@@ -811,7 +819,7 @@ All trained model weights and configurations are saved to [`saved_models/`](file
 
 | Checkpoint Path                                                                                                                                                 | Architecture                            | Training Dataset & Noise                                       | Loss Function              | Test Performance            |
 | :-------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------- | :------------------------------------------------------------- | :------------------------- | :-------------------------- |
-| **[`synthetic_mlp_gaussian_mse.pt`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/saved_models/synthetic_mlp_gaussian_mse.pt)**     | 4-layer MLP (1 → 64 → 64 → 64 → 1)  | Synthetic ($f^*$), Gaussian ($\sigma=0.3$) | MSE ($L_2$) | Test ISE:**0.15605** |                             |
+| **[`synthetic_mlp_gaussian_mse.pt`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/saved_models/synthetic_mlp_gaussian_mse.pt)**     | 4-layer MLP (1 → 64 → 64 → 64 → 1)  | Synthetic ($f^*$), Gaussian ($\sigma=0.3$) | MSE ($L_2$) | Test ISE: **0.15605** |
 | **[`synthetic_mlp_student_t_rcos.pt`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/saved_models/synthetic_mlp_student_t_rcos.pt)** | 4-layer MLP                             | Synthetic ($f^*$), Student-$t$ ($\nu=3$)                 | Adaptive RCOS              | Test ISE:**0.06252**  |
 | **[`synthetic_mlp_gamma_rcos.pt`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/saved_models/synthetic_mlp_gamma_rcos.pt)**         | 4-layer MLP                             | Synthetic ($f^*$), Centered Gamma ($k=3$)                  | Adaptive RCOS              | Test ISE:**0.11896**  |
 | **[`boston_mlp_huber.pt`](file:///c:/Users/harsh/OneDrive/Desktop/MSE-model-misspecification/saved_models/boston_mlp_huber.pt)**                         | 4-layer MLP (11 → 64 → 64 → 64 → 1) | Boston Housing (OpenML)                                        | Huber Loss                 | Test MAE:**2.153 €** |
@@ -865,21 +873,21 @@ python run_experiments.py --dataset boston --eval_only --load_path saved_models/
 
 ## 8. Summary Taxonomy Table: The Full Spectrum of Misspecification
 
-| Noise Distribution                                                                                                                                                                      | Density Geometry                                                                 | Matched MLE / Loss                                                                                                                  | MSE Limit                                                                                                                |        Efficiency Ratio$\frac{\mathrm{Var}(\bar{x})}{\text{CRLB}}$        | Neural Network Impact                                               |
-| :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------: | :------------------------------------------------------------------ |
-| **Gaussian $\mathcal{N}(0, \sigma^2)$** | Light tails ($e^{-w^2}$) | MSE ($L_2$) | Unbiased,$\bar{x} \to A$                                                               | **1.000**                                                                  | Correctly specified; achieves lowest test RMSE.                                                                                     |                                                                                                                          |                                                                            |                                                                     |
-| **Laplace $(0, b)$** | Medium tails ($e^{-\ | w\ | }$) | MAE ($L_1$) | Unbiased,$\bar{x} \to A$                                                                           |                                                                                  |                                                                                                                                     |                                                                                                                          |                                                                            |                                                                     |
-| **Student-$t$ ($\nu > 2$)** | Power-law tail ($\ | w\ | ^{-\nu-1}$)                                                                                                         | $t$-MLE | Unbiased,$\bar{x} \to A$                                           |                                                                                                                                     |                                                                                                                          |                                                                            |                                                                     |
-| **Cauchy ($\nu = 1$)**                                                                                                                                                          | Infinite mean & variance                                                         | Cauchy MLE                                                                                                                          | Non-convergent                                                                                                           | $\infty$ | MSE completely fails; MAE median IQR shrinks$O(1/\sqrt{N})$. |                                                                     |
-| **Centered Gamma**                                                                                                                                                                | Skewed, soft/hard edge                                                           | Gamma NLL                                                                                                                           | Unbiased for mean                                                                                                        |                         $\frac{k}{k-2}$ ($k>2$)                         | MAE incurs large squared bias; MSE incurs variance inflation.       |
-| **Shifted Lognormal**                                                                                                                                                             | Severe right skew                                                                | Lognormal MLE                                                                                                                       | Unbiased for mean                                                                                                        |                                  Undefined                                  | MAE has persistent negative bias; Huber achieves lowest total risk. |
-| **Pareto ($\alpha > 2$)** | Support edge moves with$A$ | Min-based MLE | Unbiased, rate$O(1/N)$ | Naive CRLB invalid | Min-based MLE achieves$O(1/N^2)$ super-efficiency. |                                                                                  |                                                                                                                                     |                                                                                                                          |                                                                            |                                                                     |
-| **GED ($\beta > 1$)** | Continuum bridging$L_1$ & $L_2$                                                                                                                     | $L_\beta$ loss | Unbiased,$\bar{x} \to A$                                    | $\beta^2 \frac{\Gamma(3/\beta)\Gamma(2-1/\beta)}{(\Gamma(1/\beta))^2}$ | MSE inefficient for both$\beta < 2$ and $\beta > 2$. |                                                                                                                          |                                                                            |                                                                     |
-| **Contaminated Normal**                                                                                                                                                           | Outlier mixture                                                                  | Huber M-estimator                                                                                                                   | Unbiased,$\bar{x} \to A$ | Explodes with$\epsilon$ | 5% outliers double MSE variance; Huber remains$\approx 1.05$. |                                                                            |                                                                     |
-| **Uniform $\mathcal{U}[-\Delta, \Delta]$** | Compact support | Midrange$\frac{\min+\max}{2}$ | Unbiased, rate$O(1/N)$                                                       | $O(N) \to \infty$ | Midrange achieves$O(1/N^2)$; MSE infinitely inefficient. |                                                                                                                                     |                                                                                                                          |                                                                            |                                                                     |
-| **Logistic $(0, s)$** | Smooth exponential tails | Logistic MLE | Unbiased,$\bar{x} \to A$                                                                                    | $\frac{\pi^2}{9} \approx 1.097$                                                | MSE loses 9.7% efficiency; MAE loses 33.3% efficiency.                                                                              |                                                                                                                          |                                                                            |                                                                     |
-| **Asymmetric Laplace**                                                                                                                                                            | Asymmetric exponential                                                           | Pinball / Quantile                                                                                                                  | Converges to mean                                                                                                        |                                  Undefined                                  | Directly generates Quantile Regression for percentile$\tau$.      |
-| **Real Insurance Claims**                                                                                                                                                         | 42% spikes + Pareto tail ($\alpha \approx 1.09$)                               | Two-Part + EVT POT                                                                                                                  | Unbiased for mean                                                                                                        |                        MCRB: 179 € vs Model 16.8 €                        | Continuous models fail; MSE corrupted by 4M € claim.               |
+| Noise Distribution | Density Geometry | Matched MLE / Loss | MSE Limit | Efficiency Ratio $\frac{\mathrm{Var}(\bar{x})}{\text{CRLB}}$ | Neural Network Impact |
+| :------------------ | :--------------- | :----------------- | :-------- | :-----------------------------------------------------------: | :-------------------- |
+| **Gaussian $\mathcal{N}(0, \sigma^2)$** | Light tails ($e^{-w^2}$) | MSE ($L_2$) | Unbiased, $\bar{x} \to A$ | **1.000** | Correctly specified; achieves lowest test RMSE. |
+| **Laplace $(0, b)$** | Medium tails ($e^{-\vert w\vert/b}$) | MAE ($L_1$) | Unbiased, $\bar{x} \to A$ | **2.000** | MSE suboptimal; MAE/Huber achieves lower variance. |
+| **Student-$t$ ($\nu > 2$)** | Power-law tail ($\vert w\vert^{-\nu-1}$) | $t$-MLE / Student-$t$ NLL | Unbiased, $\bar{x} \to A$ | $\frac{\nu(\nu+1)}{(\nu-2)(\nu+3)}$ | MSE variance inflates; RCOS adaptively selects Student-$t$ NLL. |
+| **Cauchy ($\nu = 1$)** | Infinite mean & variance | Cauchy MLE / Cauchy loss | Non-convergent (IQR constant) | $\infty$ | MSE completely destabilizes; Barron loss automatically drives $\alpha \to 0$. |
+| **Centered Gamma** | Skewed, bounded left support | Gamma NLL | Unbiased for conditional mean | $\frac{k}{k-2}$ ($k>2$) | MAE suffers severe squared bias ($\text{Median}(w) \neq 0$); MSE or Gamma NLL preserves mean. |
+| **Shifted Lognormal** | Severe right skew | Lognormal MLE | Unbiased for conditional mean | Undefined | MAE has persistent negative bias; Huber balances robustness and bias. |
+| **Pareto ($\alpha > 2$)** | Support edge moves with $A$ | Min-based MLE | Unbiased, rate $O(1/N)$ | Naive CRLB invalid | Min-based MLE achieves $O(1/N^2)$ super-efficiency; standard loss rates remain $O(1/N)$. |
+| **GED ($\beta > 1$)** | Continuum bridging $L_1$ & $L_2$ | $L_\beta$ loss | Unbiased, $\bar{x} \to A$ | $\beta^2 \frac{\Gamma(3/\beta)\Gamma(2-1/\beta)}{(\Gamma(1/\beta))^2}$ | MSE inefficient for both $\beta < 2$ and $\beta > 2$; $L_p$ loss matches shape. |
+| **Contaminated Normal** | Normal body + outlier mixture | Huber M-estimator | Unbiased, $\bar{x} \to A$ | Explodes with $\epsilon$ | 5% outliers inflate MSE variance by 23%; Huber remains robust. |
+| **Uniform $\mathcal{U}[-\Delta, \Delta]$** | Compact support with sharp edges | Midrange $\frac{\min+\max}{2}$ | Unbiased, rate $O(1/N)$ | $O(N) \to \infty$ | Midrange achieves $O(1/N^2)$; MSE is asymptotically infinitely inefficient. |
+| **Logistic $(0, s)$** | Smooth exponential tails | Logistic MLE | Unbiased, $\bar{x} \to A$ | $\frac{\pi^2}{9} \approx 1.097$ | MSE loses 9.7% efficiency; MAE loses 33.3% efficiency. |
+| **Asymmetric Laplace** | Asymmetric exponential slopes | Pinball / Quantile loss | Converges to quantile $\tau$ | Undefined | Directly parameterizes quantile regression for arbitrary target percentile $\tau$. |
+| **Real Insurance Claims** | 42% discrete spikes + Pareto tail ($\alpha \approx 1.09$) | Two-Part + EVT POT | Unbiased for mean | MCRB SE: 179.5 € vs Model SE: 16.8 € | Continuous models fail; MSE corrupted by 4M € claim. |
 
 ---
 
