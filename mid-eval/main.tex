@@ -1,0 +1,289 @@
+% Mid-evaluation slides, SDET Project 3. One file for the whole team.
+% Build from inside this folder:  pdflatex main.tex   (run it twice)
+% Figures come from ../figures/, so the slides always use the latest plots.
+% Time limit: 20 to 25 minutes for the whole team, so each part has 5 to 8 frames.
+% Each speaker writes in their own part below. Extra slides stay commented out.
+
+\documentclass[aspectratio=169, 11pt]{beamer}
+\usetheme{default}
+\usecolortheme{default}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamerfont{frametitle}{size=\large}
+\setbeamercolor{frametitle}{fg=black}
+\setbeamercolor{structure}{fg=blue!60!black}
+
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\graphicspath{{../figures/}}
+
+\title{Loss Functions as Noise Models}
+\subtitle{Signal Detection and Estimation Theory, Project 3}
+\author{Varun Shastry \and Anshitha Penubolu \and Bhuvi \and Harsh Kapoor}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ============================================================
+% PART 1 (Varun): report Sections 1 to 6, about 7 minutes
+% ============================================================
+
+\begin{frame}{The problem}
+  \begin{itemize}
+    \item Each loss function is the negative log-likelihood of one noise model.
+    \item MSE assumes Gaussian noise. MAE assumes Laplace noise.
+    \item \textbf{Question:} what is the cost when the noise model is wrong?
+  \end{itemize}
+  \vspace{0.6em}
+  \textbf{Model.} We estimate a constant $A$ from $N$ samples:
+  \[
+    x[n] = A + w[n], \qquad n = 0, \dots, N-1, \qquad w[n] \text{ i.i.d., zero mean.}
+  \]
+  This is linear regression $\mathbf{y} = \mathbf{X}\boldsymbol\theta + \mathbf{w}$ with $\mathbf{X} = \mathbf{1}$.
+
+  \vspace{0.6em}
+  \textbf{Measure of cost.}
+  \[
+    \text{efficiency ratio} = \frac{\operatorname{Var}(\hat A)}{\text{CRLB}}
+  \]
+  A ratio of 2 means twice the variance of the best estimator. If both variances fall as 1/N, the estimator needs 2 times more data. If the variance stops falling, more data will not help.
+\end{frame}
+
+\begin{frame}{The loss comes from the noise model}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \textbf{Gaussian noise}
+    \[
+      \ln p(\mathbf{x}; A) = c - \frac{1}{2\sigma^2}\sum_n (x[n] - A)^2
+    \]
+    The MLE minimises the squared error.
+    \[
+      \Rightarrow\ \hat A = \bar x \quad \text{(mean)}
+    \]
+    \column{0.48\textwidth}
+    \textbf{Laplace noise}
+    \[
+      \ln p(\mathbf{x}; A) = c - \frac{1}{b}\sum_n |x[n] - A|
+    \]
+    The MLE minimises the absolute error.
+    \[
+      \Rightarrow\ \hat A = \operatorname{median}(\mathbf{x})
+    \]
+  \end{columns}
+  \vspace{1em}
+  \begin{itemize}
+    \item For the median, the derivative of $\sum|x-A|$ is (samples below $A$) $-$ (samples above $A$). It changes sign at the middle sample.
+    \item Choosing a loss is thus to choose a noise model!
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{CRLB and the predicted cost}
+  \begin{columns}[T]
+    \column{0.5\textwidth}
+    \textbf{CRLB}
+    \begin{itemize}
+      \item Gaussian: $\sigma^2/N$
+      \item Laplace: $b^2/N$
+    \end{itemize}
+    \textbf{Variance of each estimator}
+    \begin{itemize}
+      \item Mean: $\operatorname{Var}(w)/N$ (exact for all $N$)
+      \item Median: $\approx 1/(4N\,p_w(0)^2)$ (large $N$)
+    \end{itemize}
+    \column{0.46\textwidth}
+    \textbf{Predicted efficiency ratio}
+    \vspace{0.4em}
+
+    \begin{tabular}{lcc}
+      \toprule
+       & Gaussian & Laplace \\
+      \midrule
+      Mean (MSE)   & $1$     & $2$ \\
+      Median (MAE) & $\pi/2$ & $1$ \\
+      \bottomrule
+    \end{tabular}
+  \end{columns}
+  \vspace{1.2em}
+  \begin{itemize}
+    \item Each estimator is best only for its own noise.
+    \item Under Laplace noise, the mean needs 2 times more data than the median.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Simulation: Gaussian and Laplace noise}
+  \begin{columns}[c]
+    \column{0.58\textwidth}
+    \includegraphics[width=\linewidth]{simA_ratio_vs_N.png}
+    \column{0.40\textwidth}
+    \small
+    $5000$ trials. Measured at $N = 100$:
+
+    \vspace{0.4em}
+    \begin{tabular}{lcc}
+      \toprule
+       & Gauss. & Laplace \\
+      \midrule
+      Mean   & 0.97 & 2.01 \\
+      Median & 1.51 & 1.17 \\
+      \bottomrule
+    \end{tabular}
+
+    \vspace{0.8em}
+    \begin{itemize}
+      \item The mean is flat for all $N$.
+      \item The median reaches its value only for large $N$.
+      \item At small N, our median results match exact published values (NIST, 1964).
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Skewed noise: the loss changes the target}
+  \begin{columns}[c]
+    \column{0.68\textwidth}
+    \includegraphics[width=\linewidth]{simB_histograms.png}
+    \column{0.31\textwidth}
+    \small
+    Zero-mean noise, not symmetric.
+    \begin{itemize}
+      \item Mean $\to A$
+      \item Median $\to A + \operatorname{median}(w)$
+    \end{itemize}
+    \vspace{0.3em}
+    \begin{tabular}{@{}lcc@{}}
+      \toprule
+       & Pred. & Meas. \\
+      \midrule
+      Expon. & 0.693 & 0.698 \\
+      Lognorm. & 0.351 & 0.363 \\
+      \bottomrule
+    \end{tabular}
+
+    \vspace{0.5em}
+    MSE is not biased. MSE and MAE estimate different values.
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Student-t noise: the model}
+  \[
+    p_w(w) = \frac{\Gamma\!\left(\frac{\nu+1}{2}\right)}{\sqrt{\nu\pi}\,\Gamma\!\left(\frac{\nu}{2}\right)s}
+    \left(1 + \frac{w^2}{\nu s^2}\right)^{-\frac{\nu+1}{2}}
+  \]
+  \vspace{-0.6em}
+  \begin{center}
+    \includegraphics[width=0.95\linewidth]{simC_t_density.png}
+  \end{center}
+  \vspace{-0.6em}
+  \small
+  \begin{itemize}
+    \item $\nu$ sets the tails. $\nu \to \infty$ gives Gaussian. $\nu = 1$ gives Cauchy.
+    \item $s$ sets the width. $\operatorname{Var}(w) = s^2\nu/(\nu - 2)$, finite only for $\nu > 2$.
+    \item It is a Gaussian with a random variance (Lange et al., 1989).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Student-t noise: results}
+  \begin{columns}[c]
+    \column{0.52\textwidth}
+    \includegraphics[width=\linewidth]{simC_ratio_vs_nu.png}
+    \column{0.46\textwidth}
+    \small
+    \[
+      \text{CRLB} = \frac{\nu+3}{\nu+1}\cdot\frac{s^2}{N}
+    \]
+    \[
+      \frac{\operatorname{Var}(\bar x)}{\text{CRLB}} = \frac{\nu(\nu+1)}{(\nu-2)(\nu+3)}
+    \]
+    \begin{itemize}
+      \item Heavy tails make the mean much worse (leftwards in the plot).
+      \item The median stays between 1.2 and 1.5.
+      \item They are equal at $\nu \approx 4.68$.
+      \item The t-MLE is a weighted mean with weight $(\nu+1)/(\nu + r^2)$. It reaches the CRLB.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+% \begin{frame}{Summary of part 1}
+%   \begin{itemize}
+%     \item Each loss is optimal only for its own noise model.
+%     \item Symmetric noise: the wrong loss costs variance ($2\times$ or $\pi/2\times$).
+%     \item Skewed noise: the wrong loss changes the value that it estimates.
+%     \item Heavy tails: MSE gets worse quickly. MAE stays within about 1.5 times the CRLB. The matched loss reaches the CRLB.
+%     \item All predictions agree with simulation.
+%   \end{itemize}
+% \end{frame}
+
+
+% ============================================================
+% BACKUP SLIDES for part 1. Remove the % signs to use them.
+% ============================================================
+
+% \appendix
+%
+% \begin{frame}{Backup: CRLB for Laplace noise}
+%   \begin{itemize}
+%     \item Score of one sample: $\dfrac{\partial}{\partial A}\ln p = \dfrac{\operatorname{sign}(x - A)}{b}$, so its square is $1/b^2$.
+%     \item Fisher information $N/b^2$, so $\text{CRLB} = b^2/N$.
+%     \item We use $I = E[(\partial \ln p/\partial A)^2]$. The form $-E[\partial^2 \ln p/\partial A^2]$ gives $0$, because $\ln p$ has a corner at $x = A$.
+%     \item The corner has probability zero, so the bound is valid.
+%   \end{itemize}
+% \end{frame}
+%
+% \begin{frame}{Backup: Student-t with infinite variance ($\nu \le 2$)}
+%   \begin{columns}[c]
+%     \column{0.62\textwidth}
+%     \includegraphics[width=\linewidth]{simC_infinite_variance.png}
+%     \column{0.36\textwidth}
+%     \small
+%     We compare the interquartile range (IQR), because the variance is infinite.
+%     \begin{itemize}
+%       \item $\nu = 1$ (Cauchy): the mean of $N$ samples has the same distribution as one sample. Its IQR stays at 2.
+%       \item The median IQR decreases as $1/\sqrt{N}$.
+%     \end{itemize}
+%   \end{columns}
+% \end{frame}
+%
+% \begin{frame}{Backup: Student-t, ratio against $N$}
+%   \begin{center}
+%     \includegraphics[width=\linewidth]{simC_ratio_vs_N.png}
+%   \end{center}
+%   \small The mean is flat for all $N$. The median settles after a few hundred samples.
+% \end{frame}
+
+
+% ============================================================
+% PART 2 (next speaker): add your frames here, about 5 to 8 frames
+% Remove the % signs from the template frame below to start.
+% Put new figures in ../figures/ and use only the file name.
+% ============================================================
+
+% \begin{frame}{Title of the frame}
+%   \begin{columns}[c]
+%     \column{0.58\textwidth}
+%     \includegraphics[width=\linewidth]{your_figure.png}
+%     \column{0.40\textwidth}
+%     \small
+%     \begin{itemize}
+%       \item First point.
+%       \item Second point.
+%     \end{itemize}
+%   \end{columns}
+% \end{frame}
+
+% ============================================================
+% PART 3 (next speaker): add your frames here
+% ============================================================
+
+% ============================================================
+% PART 4 (next speaker): add your frames here
+% ============================================================
+
+\begin{frame}
+  \centering
+  \Large Thank you. Questions?
+\end{frame}
+\end{document}

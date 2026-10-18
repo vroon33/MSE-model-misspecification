@@ -1,4 +1,4 @@
-# Authors: Varun Shastry and HARSH070105
+# Authors: Varun Shastry and Harsh Kapoor
 # Simulation C: mean, median and t-MLE under Student-t noise
 # Model is DC under noise w[n] ~ t(nu) with scale 1, which is symmetric with heavier tails than gaussian
 # nu large is gaussian, nu = 1 is Cauchy
@@ -52,18 +52,44 @@ def efficiency_ratios(nu, N, with_mle=False):
     r_mle = np.var(t_mle(x, nu)) / crb if with_mle else np.nan
     return r_mean, r_median, r_mle
 
-# ---------------- Part 1: the densities ----------------
+# ---------------- Part 1: the densities, what nu and s do ----------------
+def t_pdf(w, nu, s):
+    return f_centre(nu) / s * (1 + (w / s)**2 / nu) ** (-(nu + 1) / 2)
+
 w = np.linspace(-6, 6, 1000)
-plt.figure(figsize=(7, 4))
-for nu in [3, 5, 30]:
-    pdf = f_centre(nu) * (1 + w**2 / nu) ** (-(nu + 1) / 2)
-    plt.plot(w, pdf, label="t, nu = %d" % nu)
-plt.plot(w, norm.pdf(w), color="gray", linestyle="--", label="Gaussian N(0, 1)")
+plt.figure(figsize=(13, 4))
+
+# (a) changing nu, linear scale: the centre looks almost the same
+plt.subplot(1, 3, 1)
+for nu in [1, 3, 30]:
+    plt.plot(w, t_pdf(w, nu, 1), label="nu = %d" % nu)
+plt.plot(w, norm.pdf(w), color="gray", linestyle="--", label="Gaussian")
+plt.xlabel("w")
+plt.ylabel("p(w)")
+plt.title("(a) changing nu, s = 1")
+plt.legend()
+plt.grid(alpha=0.3)
+
+# (b) same curves on a log scale: the tails are very different
+plt.subplot(1, 3, 2)
+for nu in [1, 3, 30]:
+    plt.plot(w, t_pdf(w, nu, 1), label="nu = %d" % nu)
+plt.plot(w, norm.pdf(w), color="gray", linestyle="--", label="Gaussian")
 plt.yscale("log")
 plt.ylim(1e-5, 1)
 plt.xlabel("w")
 plt.ylabel("p(w), log scale")
-plt.title("Student-t densities (scale 1)")
+plt.title("(b) same, log scale (tails)")
+plt.legend()
+plt.grid(alpha=0.3)
+
+# (c) changing the scale s with nu fixed: the whole shape stretches
+plt.subplot(1, 3, 3)
+for s_val in [0.5, 1, 2]:
+    plt.plot(w, t_pdf(w, 3, s_val), label="s = %g" % s_val)
+plt.xlabel("w")
+plt.ylabel("p(w)")
+plt.title("(c) changing s, nu = 3")
 plt.legend()
 plt.grid(alpha=0.3)
 plt.tight_layout()
