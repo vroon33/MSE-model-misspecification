@@ -255,23 +255,184 @@
 % \end{frame}
 
 
-% ============================================================
-% PART 2 (next speaker): add your frames here, about 5 to 8 frames
-% Remove the % signs from the template frame below to start.
-% Put new figures in ../figures/ and use only the file name.
+% PART 2 (Bhuvi): the misspecified CRB, report Section 8, about 8 minutes
 % ============================================================
 
-% \begin{frame}{Title of the frame}
-%   \begin{columns}[c]
-%     \column{0.58\textwidth}
-%     \includegraphics[width=\linewidth]{your_figure.png}
-%     \column{0.40\textwidth}
-%     \small
-%     \begin{itemize}
-%       \item First point.
-%       \item Second point.
-%     \end{itemize}
-%   \end{columns}
+\begin{frame}{Why we need a new bound}
+  \begin{itemize}
+    \item The CRLB is computed from the \textbf{true} noise. An estimator built on the \textbf{wrong} noise model never reaches it.
+    \item The mean under Laplace noise stays at $2\times$ CRLB for every $N$. The median under skewed noise does not even aim at $A$.
+    \item We want a bound that predicts what the wrong-model estimator \textbf{actually} gets.
+  \end{itemize}
+  \vspace{0.5em}
+  \textbf{Example.} Estimate the noise variance with a Gaussian model, $\hat\theta = \frac1N\sum_n x[n]^2$, when the noise is Laplace($b$):
+  \vspace{0.3em}
+  \begin{center}
+    \begin{tabular}{lc}
+      \toprule
+      Bound & $N \cdot$ value \\
+      \midrule
+      CRLB of the assumed Gaussian model & $8b^4$ \\
+      CRLB of the true Laplace model & $16b^4$ \\
+      Actual variance of $\hat\theta$ (measured $20.04$) & $\mathbf{20b^4}$ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \vspace{0.3em}
+  Trusting the wrong model gives $8b^4$, which is not even a valid bound. The true CRLB is valid, but loose.
+\end{frame}
+
+\begin{frame}{The misspecified CRB (MCRB)}
+  True density $p$, assumed model $f(x \mid \theta)$.
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \textbf{Pseudo-true parameter} (closest model in KL)
+    \[
+      \theta_0 = \arg\max_\theta\, E_p\big[\ln f(x\mid\theta)\big]
+    \]
+    \textbf{MCRB} (Vuong 1986, Fortunati et al.\ 2017)
+    \[
+      \text{MCRB} = \frac{1}{N}\,\frac{\mathcal B}{\mathcal A^2}, \quad
+      \begin{aligned}
+        \mathcal A &= E_p[\partial_\theta^2 \ln f]\\
+        \mathcal B &= E_p[(\partial_\theta \ln f)^2]
+      \end{aligned}
+    \]
+    Model inside, true density outside.
+    \column{0.46\textwidth}
+    \textbf{Two key facts}
+    \begin{itemize}
+      \item Correct model: $\mathcal B = -\mathcal A = I$, so MCRB = CRLB.
+      \item The wrong-model MLE goes to $\theta_0$ with variance $\to$ MCRB. So the bound is \textbf{tight}.
+    \end{itemize}
+    \textbf{Our earlier formulas are MCRBs}
+    \begin{itemize}
+      \item Gaussian model: mean, $\operatorname{Var}(w)/N$
+      \item Laplace model: median, $1/(4N f(m)^2)$, aiming at $A + \operatorname{median}(w)$
+    \end{itemize}
+  \end{columns}
+  \vspace{0.4em}
+  \centering Efficiency ratio $=$ MCRB / CRLB $=$ the price of the wrong model.
+\end{frame}
+
+\begin{frame}{Which estimators does the MCRB bound?}
+  \textbf{Paradox.} Laplace noise, Gaussian model: MCRB $= 2b^2/N$. The median is unbiased for $\theta_0 = A$, yet has variance $b^2/N$.
+
+  \vspace{0.5em}
+  \textbf{Resolution.} The bound needs $E_p[\hat\theta] = \theta_0(p)$ for \textbf{every} true $p$, not only ours.
+  \begin{itemize}
+    \item Perturb the truth: $p_t = p\,(1 + t\,g)$. Unbiasedness along $p_t$ plus Cauchy--Schwarz gives
+    \[
+      \operatorname{Var}(\hat\theta) \geq \frac{(E[\phi\, g])^2}{N\,E[g^2]}, \qquad \phi = -\frac{\partial_\theta \ln f}{\mathcal A}.
+    \]
+    \item The best direction is $g = \phi$, which gives exactly $\mathcal B/(N\mathcal A^2)$.
+    \item Along that direction, $\theta_0$ moves at rate $2b^2$ but the median moves at $b^2$. So the median is \textbf{not covered}.
+  \end{itemize}
+  \vspace{0.3em}
+  \textbf{So:} one loss's MCRB is not a floor for other losses. The common floor is the CRLB of the true noise.
+\end{frame}
+
+\begin{frame}{Regression with robust losses: one formula}
+  $y_i = \theta_0 + \theta_1 x_i + w_i$, \quad $x_i \sim U(-2,2)$, \quad loss $\rho$ with $\psi = \rho'$.
+  \begin{columns}[T]
+    \column{0.52\textwidth}
+    \textbf{Linearise} $\sum_i \psi(y_i - \mathbf x_i^\top\hat{\boldsymbol\theta})\,\mathbf x_i = \mathbf 0$:
+    \[
+      \text{MCRB} = \frac{\kappa}{\lambda^2}\,(\mathbf X^\top\mathbf X)^{-1}, \qquad
+      \text{CRLB} = \frac{(\mathbf X^\top\mathbf X)^{-1}}{I_{\text{loc}}}
+    \]
+    $\lambda = E[\psi'(w)]$, \ $\kappa = E[\psi(w)^2]$ (MAE: $\lambda = 2p(0)$).
+    \[
+      \text{ratio} = \frac{\kappa\, I_{\text{loc}}}{\lambda^2} \;\geq\; 1
+    \]
+    By Cauchy--Schwarz, with $=1$ only for the true likelihood.
+    \column{0.45\textwidth}
+    \small
+    \textbf{Losses:} MSE, MAE, Huber, $t_3$, Cauchy.\\
+    \textbf{Noises:} Gaussian, Laplace, $t_3$, Cauchy, contaminated $0.9\,\mathcal N(0,1) + 0.1\,\mathcal N(0,25)$.
+    \vspace{0.4em}
+    \begin{itemize}
+      \item Symmetric noise: every loss aims at the true $\boldsymbol\theta$.
+      \item Scale rule fixed beforehand: each loss uses the scale that makes it the MLE for its own noise, estimated from the MAD.
+      \item The ratio does not depend on $\mathbf X$.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Mismatch matrix: predicted vs measured}
+  \begin{columns}[c]
+    \column{0.62\textwidth}
+    \includegraphics[width=\linewidth, trim=90 0 120 0, clip]{simJ_mismatch_matrix.png}
+    \column{0.37\textwidth}
+    \small
+    $N = 100$, $5000$ trials per cell.
+    \begin{itemize}
+      \item Diagonal $= 1$. No loss is best everywhere.
+      \item MSE fails under Cauchy noise: $\kappa = E[w^2] = \infty$.
+      \item Gates: MSE $\approx 1, 2$ under Gaussian and Laplace, $t_3$-loss at $1.01$.
+      \item 16 of 24 cells within 2 standard errors. All biases $< 0.005$.
+      \item The rest are above the prediction: finite-$N$ effects. At $N = 1000$ they are within $4\%$.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{How tight is the MCRB at finite $N$?}
+  \begin{columns}[c]
+    \column{0.6\textwidth}
+    \includegraphics[width=\linewidth]{simJ_tightness_vs_N.png}
+    \column{0.39\textwidth}
+    \small
+    Measured variance $/$ MCRB, $4000$ trials.
+    \begin{itemize}
+      \item \textbf{Exact for all $N$:} MSE (OLS is linear in the data).
+      \item \textbf{Slowly from above:} MAE under Laplace, $1.94 \to 1.04$. Cauchy-loss, $3.0$ at $N = 10$.
+      \item \textbf{Below the bound:} MAE under Gaussian, $0.942 \pm 0.006$ at $N = 10$.
+    \end{itemize}
+    \vspace{0.3em}
+    The MCRB is reached in the limit. It is not a finite-$N$ floor.
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Estimating the MCRB from data (sandwich)}
+  \begin{center}
+    \includegraphics[width=0.82\linewidth]{simK_sandwich_coverage.png}
+  \end{center}
+  \vspace{-0.4em}
+  \small
+  $\widehat{\text{Cov}} = \hat{\mathbf A}^{-1}\hat{\mathbf B}\hat{\mathbf A}^{-1}$ from the residuals. Coverage of $95\%$ intervals, $5000$ trials:
+  \begin{itemize}
+    \item \textbf{Heteroscedastic regression:} classical SE about $88\%$ at every $N$. HC3 (sandwich) about $95\%$ from $N = 20$.
+    \item \textbf{Noise variance, Laplace:} Gaussian-model SE $78$--$80\%$ (predicted $78.5\%$). Sandwich reaches $94.5\%$ at $N = 1000$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Summary of part 2}
+  \begin{itemize}
+    \item The CRLB says what is possible. The MCRB says what the wrong model actually gets.
+    \item MCRB / CRLB is the price of the wrong loss, and one formula $\kappa\lambda^{-2}(\mathbf X^\top\mathbf X)^{-1}$ predicts all 25 cells.
+    \item It binds only estimators unbiased for $\theta_0(p)$ for every $p$. Compare losses against the true CRLB.
+    \item Tight as $N \to \infty$. At small $N$ it can be above or below.
+    \item From data, the sandwich gives correct intervals where the model-based formula does not.
+  \end{itemize}
+\end{frame}
+
+% ============================================================
+% BACKUP SLIDES for part 2. Remove the % signs to use them.
+% ============================================================
+
+% \begin{frame}{Backup: predicted mismatch matrix, $\kappa I_{\text{loc}}/\lambda^2$}
+%   \centering
+%   \begin{tabular}{lccccc}
+%     \toprule
+%     Loss & Gaussian & Laplace & $t_3$ & Cauchy & Contam. \\
+%     \midrule
+%     MSE         & 1     & 2     & 2     & $\infty$ & 2.714 \\
+%     MAE         & 1.571 & 1     & 1.234 & 1.234 & 1.481 \\
+%     Huber       & 1.053 & 1.433 & 1.058 & 1.757 & 1.100 \\
+%     $t_3$-loss  & 1.143 & 1.255 & 1     & 1.177 & 1.071 \\
+%     Cauchy-loss & 1.582 & 1.154 & 1.146 & 1     & 1.379 \\
+%     \bottomrule
+%   \end{tabular}
 % \end{frame}
 
 % ============================================================
