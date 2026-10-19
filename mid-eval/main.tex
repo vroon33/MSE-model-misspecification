@@ -458,6 +458,97 @@
   \end{itemize}
 \end{frame}
 
+% ---------- Harsh: neural networks (report Section 11), about 4 minutes ----------
+
+\begin{frame}{Neural networks: the loss is still a noise model}
+  \small
+  From one number $A$ to a whole function:
+  \[
+    y = f^*(x) + w, \qquad f^*(x) = \sin(2\pi x) + 0.5x, \qquad x \sim \mathcal{U}[0, 1].
+  \]
+  \begin{itemize}
+    \item Network $f_\theta$: MLP, 3 hidden layers of width 64, GELU, AdamW, 400 epochs. $N = 250$, 25 independent trials.
+    \item Losses compared: MSE (Gaussian), MAE (Laplace), Huber, the matched likelihood, and \textbf{RCOS}, which picks the loss from the data.
+    \item Noise: Gaussian ($\sigma = 0.3$), centered gamma ($k = 3$, skewed), Student-$t$ ($\nu = 3$, heavy tails).
+  \end{itemize}
+  \textbf{Error measure} over the 25 trained networks, with $\bar f$ their average:
+  \[
+    \text{Total risk} = \underbrace{\tfrac{1}{K}\textstyle\sum_k \big(\bar f(x_k) - f^*(x_k)\big)^2}_{\text{Bias}^2}
+    + \underbrace{\tfrac{1}{K}\textstyle\sum_k \tfrac{1}{M}\sum_m \big(f^{(m)}(x_k) - \bar f(x_k)\big)^2}_{\text{Variance}}
+  \]
+  The same split as in the DC case: a wrong target shows up as bias, a wasteful loss as variance.
+\end{frame}
+
+\begin{frame}{RCOS: choosing the loss from the residuals}
+  \small
+  \begin{enumerate}
+    \item Split the training data: $75\%$ to fit, $25\%$ to calibrate. The test set is never touched.
+    \item Train a pilot network with Huber loss, and compute residuals $r_i$ on the calibration part.
+    \item Measure skewness $\hat\gamma_1$, excess kurtosis $\hat\kappa$ and the tail ratio $\hat\sigma / \hat\sigma_{\text{MAD}}$.
+    \item Choose the loss:
+      \begin{itemize}
+        \item $|\hat\gamma_1| \ge 0.45$ (skewed) $\Rightarrow$ gamma likelihood, with $\hat k = 4/\hat\gamma_1^2$
+        \item $\hat\kappa \ge 0.8$ or tail ratio $\ge 1.22$ (heavy tails) $\Rightarrow$ Student-$t$ likelihood, $\hat\nu = \max(2.1,\, 4 + 6/\hat\kappa)$
+        \item otherwise $\Rightarrow$ MSE
+      \end{itemize}
+    \item Retrain on all the training data with the chosen loss.
+  \end{enumerate}
+  \vspace{0.3em}
+  The rules use the moment formulas of the earlier sections: gamma skewness $2/\sqrt{k}$, Student-$t$ excess kurtosis $6/(\nu - 4)$.
+\end{frame}
+
+\begin{frame}{Neural networks: simulation results}
+  \small
+  \begin{center}
+  \begin{tabular}{lccc}
+    \toprule
+    Total risk (Bias$^2$) & Gaussian & Gamma ($k = 3$) & Student-$t$ ($\nu = 3$) \\
+    \midrule
+    MSE   & 0.068 (0.030) & 0.072 (0.033) & 0.079 (0.040) \\
+    MAE   & 0.098 (0.056) & 0.096 (\textbf{0.052}) & 0.089 (0.047) \\
+    Huber & 0.028 (0.009) & 0.047 (0.017) & 0.029 (0.007) \\
+    RCOS  & 0.083 (0.039) & 0.082 (0.043) & \textbf{0.066} (0.022) \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  $N = 250$, 25 trials.
+  \begin{itemize}
+    \item \textbf{Gaussian:} RCOS chose MSE in 25 of 25 trials, so it does not raise false alarms.
+    \item \textbf{Student-$t$:} RCOS has $16\%$ less risk than MSE ($0.066$ vs $0.079$).
+    \item \textbf{Gamma:} MAE has the largest bias ($0.052$ vs $0.033$ for MSE). It fits the conditional median, shifted from the mean as in the DC case.
+    \item Huber, the pilot loss, has the lowest risk in all three regimes.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Neural networks on the insurance claims}
+  \small
+  Predict each claim from the policy features (driver age, vehicle, area, \dots). Test set: $20\%$ of the policies.
+  \vspace{0.3em}
+  \begin{columns}[c]
+    \column{0.52\textwidth}
+    \includegraphics[width=\linewidth]{simNN_claims_predictions.png}
+    \column{0.46\textwidth}
+    \footnotesize
+    \begin{tabular}{lcc}
+      \toprule
+      Loss & Typical error & Typical prediction \\
+      \midrule
+      MSE    & 876 & 1869 \\
+      MAE    & 273 & 1143 \\
+      Huber  & 269 & 1115 \\
+      Barron & 268 & 1094 \\
+      \bottomrule
+    \end{tabular}
+
+    (median absolute error and median prediction, euros)
+    \begin{itemize}
+      \item MSE predicts a typical claim of 1869, pulled up by the largest claims, with about $3\times$ the typical error.
+      \item The robust losses stay near the 1172 median.
+      \item Same lesson as the DC case: MSE estimates the mean, which the tail dominates.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
 % ---------- Anshitha: BACKUP slides. Remove the % signs to use them. ----------
 %
 % \begin{frame}{Backup: CRLB for gamma noise}
