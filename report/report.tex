@@ -947,8 +947,9 @@ the edge and goes to zero there, so the bound above is valid. For $1 < k \leq 2$
 goes to zero at the edge, but $E[1/Y^2]$ is infinite, so the Fisher information is infinite and the
 CRLB gives only the useless bound $0$. For $k \leq 1$ the density does not go to zero at the edge at
 all, and the CRLB does not apply. Smith~\cite{smith} studied this non-regular case and showed that estimators based on the
-smallest samples can then converge faster than $1/N$. We come back to this in
-Section~\ref{sec:pareto} with Pareto noise, where the edge itself moves with $A$.
+smallest samples can then converge faster than $1/N$. We show this for gamma noise in
+Section~\ref{sec:gamma-edge}, and Section~\ref{sec:pareto} studies Pareto noise, where the density
+jumps to a nonzero value at an edge that moves with $A$.
 
 \subsection{The mean, the matched estimator and the median}
 
@@ -982,9 +983,9 @@ given by \eqref{eq:varmedian} with the density at the median, $1/(4N f(m)^2)$.
 
 \subsection{Simulation results}
 
-The code is in \texttt{sim/sim\_D\_gamma.py}, with $A = 1$, $\theta = 1$, $N = 100$ and $5000$ trials.
-Table~\ref{tab:simE-eff} shows the efficiency of the mean and of the gamma MLE, and
-Table~\ref{tab:simE-med} shows where the median lands. Figure~\ref{fig:simE} plots the mean's ratio
+The code is in \texttt{Classic\_sim/sim\_D\_gamma.py}, with $A = 1$, $\theta = 1$, $N = 100$ and $5000$ trials.
+Table~\ref{tab:gamma-eff} shows the efficiency of the mean and of the gamma MLE, and
+Table~\ref{tab:gamma-med} shows where the median lands. Figure~\ref{fig:gamma-ratio} plots the mean's ratio
 against $k$.
 
 \begin{table}[H]
@@ -1002,7 +1003,7 @@ $k$ & Skewness & Mean, predicted & Mean, measured & Gamma MLE, measured \\
 \end{tabular}
 \caption{$\operatorname{Var}(\hat A)/\text{CRLB}_\gamma$ under gamma noise, $N = 100$, $5000$ trials.
 The predicted value for the gamma MLE is $1$.}
-\label{tab:simE-eff}
+\label{tab:gamma-eff}
 \end{table}
 
 \begin{table}[H]
@@ -1019,7 +1020,7 @@ $k$ & Limit $A + \operatorname{median}(w)$ & Average median & Predicted std & Me
 \bottomrule
 \end{tabular}
 \caption{Where the sample median lands under gamma noise, with $A = 1$, $N = 100$, $5000$ trials.}
-\label{tab:simE-med}
+\label{tab:gamma-med}
 \end{table}
 
 \begin{figure}[H]
@@ -1027,15 +1028,96 @@ $k$ & Limit $A + \operatorname{median}(w)$ & Average median & Predicted std & Me
 \includegraphics[width=0.8\linewidth]{../figures/simD_gamma_ratio_vs_k.png}
 \caption{Efficiency ratio of the mean and of the gamma MLE against the shape $k$. The line is
 $k/(k-2)$ and the markers are the simulation.}
-\label{fig:simE}
+\label{fig:gamma-ratio}
 \end{figure}
 
 The mean follows $k/(k-2)$ closely, and the median lands on its predicted limit with the predicted
 spread for every $k$. The $k = 1$ row reproduces the exponential results of Section~\ref{sec:simB}.
 The gamma MLE is close to the CRLB for $k \geq 5$. At $k = 3$ it is at $1.22$, which is a
 finite-sample effect. Close to the non-regular boundary $k = 2$ the MLE needs many samples to reach
-its asymptotic behaviour, and repeating the experiment at larger $N$ we found the ratio falling to
-$1.12$, $1.09$, $1.08$ and $1.04$ for $N = 100$, $300$, $1000$ and $3000$.
+its asymptotic behaviour. Repeating the experiment for $k = 3$ with more trials (in
+\texttt{Classic\_sim/sim\_L\_gamma\_edge.py}), the ratio is $1.18$ at $N = 100$, $1.10$ at $N = 300$
+and $1.04$ at both $N = 1000$ and $N = 3000$, each with a Monte Carlo error of about $0.02$ (so $1.18$ and the $1.22$ of
+Table~\ref{tab:gamma-eff} agree within this error). So the gamma MLE approaches the CRLB, but slowly. The mean stays at $k/(k-2) = 3$ for every $N$, since
+$\operatorname{Var}(\bar x) = k\theta^2/N$ exactly.
+
+\subsection{Below $k = 2$, the edge}
+\label{sec:gamma-edge}
+
+For $k \leq 2$ the CRLB says nothing, and the table above simply has no entry for $k = 1$. The data
+are not uninformative there. They have a hard left edge at $c = A - k\theta$, and the smallest sample
+sits close to it. This suggests the edge estimator
+\[
+  \hat A_{\text{edge}} = \min_n x[n] + k\theta ,
+\]
+which uses only one sample. It is not an arbitrary choice. For $k \leq 1$ the gamma likelihood
+$\prod_n (x[n] - c)^{k-1} e^{-(x[n] - c)/\theta}$ grows as the edge $c$ moves up towards the smallest
+sample, so the gamma MLE puts the edge exactly there, and it is the edge estimator. So this is again
+the matched loss against squared error. Near the edge the gamma distribution function is
+$P(Y \leq y) \approx (y/\theta)^k / \Gamma(k+1)$, so
+\[
+  P\Big(\min_n Y_n > y\Big) = \big(1 - P(Y \leq y)\big)^N \approx
+  \exp\!\left(-\frac{N (y/\theta)^k}{\Gamma(k+1)}\right).
+\]
+In other words $\min_n Y_n \approx \theta\,\big(\Gamma(k+1)/N\big)^{1/k} E^{1/k}$ with $E$ exponential with
+mean $1$, and since $E[E^{2/k}] = \Gamma(1 + 2/k)$,
+\[
+  \boxed{\text{MSE}(\hat A_{\text{edge}}) \approx \theta^2\,\Gamma\!\left(1 + \tfrac{2}{k}\right)
+  \Gamma(k+1)^{2/k}\, N^{-2/k}}
+\]
+This is exact for $k = 1$, where it gives $2\theta^2/N^2$. For other $k$ it is a large-$N$ approximation. Integrating $E[(\min_n Y_n)^2] = \int_0^\infty 2y\,(1 - P(Y \leq y))^N dy$ numerically, it is within $10\%$ of the exact value at $N = 1600$ for all four $k$ used below, and less accurate for small $N$ and $k = 3$. The mean has $\text{MSE} = k\theta^2/N$ for
+every $k$. So the edge estimator converges like $N^{-2/k}$ and the mean like $N^{-1}$. For $k < 2$ the
+edge wins according to these formulas for every $N$ beyond about $3$, and for $k > 2$ the mean wins. The value $k = 2$, where the
+Fisher information stops being finite, is exactly where the two rates meet. This agrees with the
+general result of Smith~\cite{smith} for densities that behave like $(x - c)^{k-1}$ at an edge.
+
+The code is in \texttt{Classic\_sim/sim\_L\_gamma\_edge.py}, with $A = 1$, $\theta = 1$ and
+$4000$ trials for each $k$ and $N$. Figure~\ref{fig:gamma-edge} shows the mean square error of the
+estimates about the true $A$, and Table~\ref{tab:gamma-edge} the measured rates.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../figures/simL_gamma_edge.png}
+\caption{Mean square error against $N$ under gamma noise, for the mean, the edge estimator and,
+for $k > 1$, the gamma MLE from the score equation (for $k \leq 1$ the MLE is the edge estimator).
+Lines are the formulas above, markers the simulation.}
+\label{fig:gamma-edge}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rcccc}
+\toprule
+$k$ & Edge, predicted & Edge, measured & Mean, measured & Gamma MLE, measured \\
+\midrule
+0.5 & $-4.00$ & $-4.07$ & $-1.02$ & -- \\
+1   & $-2.00$ & $-2.00$ & $-0.99$ & -- \\
+1.5 & $-1.33$ & $-1.35$ & $-1.02$ & $-1.39$ \\
+3   & $-0.67$ & $-0.72$ & $-1.00$ & $-1.03$ \\
+\bottomrule
+\end{tabular}
+\caption{Slope of $\log \text{MSE}$ against $\log N$, fitted for $N = 200$ to $1600$.}
+\label{tab:gamma-edge}
+\end{table}
+
+The rates agree with the predictions. The differences are large in practice. At $N = 100$ the edge
+estimator is $50$ times more accurate than the mean for $k = 1$ (the ratio is exactly $N/2$), and
+more than $30000$ times for $k = 0.5$. At $k = 1.5$ the gamma MLE also beats the rate $1/N$, with a slope
+of $-1.39$, close to the edge rate predicted by Smith. At $k = 3$ the order flips. The edge estimator
+is the worst of the three, and the gamma MLE approaches the CRLB, as found above.
+
+The median is not shown. Its mean square error levels off at its squared bias,
+$\operatorname{median}(w)^2 = 0.074$ for $k = 0.5$ and $0.094$ for $k = 1$, and the simulation reaches
+these values by $N = 1600$, so it never improves with more data. This is the
+bias term of Section~\ref{sec:mcrb}.
+
+\subsection{Summary}
+
+Under skewed noise, squared error keeps its target but wastes data, by a factor $k/(k-2)$ that is
+large only when the skew is large. Absolute error loses its target instead. Its shift of about
+$-\theta/3$ never goes away with more data, but it becomes small next to the noise spread as $k$
+grows. For very skewed noise, $k < 2$, both are beaten by an estimator that uses the edge of the
+data, at a faster rate than the $1/N$ of a regular estimation problem.
 
 This section leaves one question open. The median does not estimate $A$, so the CRLB, which is a
 bound for unbiased estimators of $A$, says nothing about it. The same is true for the mean under
@@ -1905,7 +1987,7 @@ continuous distribution can describe such spikes, so we expect every fit to be i
 
 We fit five families by maximum likelihood with \texttt{scipy.stats}, fixing the location at
 zero for the families that live on positive values. The code for this section is in
-\texttt{sim/sim\_G\_real\_data.py}.
+\texttt{Classic\_sim/sim\_G\_real\_data.py}.
 We compare them with the Akaike information criterion,
 \[
   \text{AIC} = 2p - 2\ln L ,
@@ -1928,7 +2010,7 @@ Gaussian    & 2 & $-311788$ & $623579$ & 0.469 \\
 \bottomrule
 \end{tabular}
 \caption{Maximum likelihood fits to the $26639$ claim amounts, sorted by AIC.}
-\label{tab:simH-fits}
+\label{tab:real-fits}
 \end{table}
 
 \begin{figure}[H]
@@ -1936,7 +2018,7 @@ Gaussian    & 2 & $-311788$ & $623579$ & 0.469 \\
 \includegraphics[width=0.85\linewidth]{../figures/simG_claims_hist.png}
 \caption{Histogram of $\log_{10}$ of the claim amounts with the fitted densities. The spike of fixed
 amounts near $1200$ is cut off at the top.}
-\label{fig:simH-hist}
+\label{fig:real-hist}
 \end{figure}
 
 \begin{figure}[H]
@@ -1944,7 +2026,7 @@ amounts near $1200$ is cut off at the top.}
 \includegraphics[width=\linewidth]{../figures/simG_claims_qq.png}
 \caption{QQ plots of the claim amounts against the fitted gamma, lognormal and Weibull distributions,
 on log scales. A perfect fit would lie on the dashed line.}
-\label{fig:simH-qq}
+\label{fig:real-qq}
 \end{figure}
 
 The Gaussian is by far the worst fit, which is expected for data that are positive and this
@@ -1953,6 +2035,7 @@ is in between. None of the fits is good, for two reasons that are visible in the
 steps in the QQ plots are the spikes of fixed amounts. At the top right, the largest claims bend
 sharply above every fitted line, so the real tail is heavier than even the lognormal. A power-law
 tail like the Pareto of Section~\ref{sec:pareto} would be a better description of the largest claims.
+We deal with the spikes in Section~\ref{sec:spikes} and with the tail in Section~\ref{sec:tail}.
 
 \subsection{What the gamma shape tells us}
 
@@ -1991,15 +2074,16 @@ Median (MAE) & 1172.0 & --   & --    & 0.0 \\
 \bottomrule
 \end{tabular}}
 \caption{The typical claim estimated by the mean and the median, with standard errors.}
-\label{tab:simH-se}
+\label{tab:real-se}
 \end{table}
 
 The sample MCRB and the bootstrap agree, at about $178$. The gamma model gives $16.8$, which is
 $10.7$ times too small. The fitted gamma has a standard deviation of $\sqrt{k}\,\theta = 2748$, but the
 data have $29297$, because the gamma tail is far too light for the largest claims. This is the same
 lesson as the variance example of Section~\ref{sec:mcrb}. A precision computed by trusting the
-assumed model can be far too optimistic, while the MCRB estimated from the data gives the right
-answer.
+assumed model can be far too optimistic, while the MCRB estimated from the data gives a far more
+realistic answer. Even this answer has a limit on these data, which we explain in
+Section~\ref{sec:tail-robust}.
 
 The median shows the effect of the spikes. The sample median is $1172$, which is itself one of the
 fixed amounts with $2072$ claims. Resampling never moves the median off this value, so its bootstrap
@@ -2008,13 +2092,136 @@ density at the median, and a spike behaves like an infinitely tall density there
 standard error of zero. On these data the median is extremely stable, but only because of how the
 claims are recorded.
 
-\subsection{Next steps}
+\subsection{Separating the fixed amounts}
+\label{sec:spikes}
 
-This is a first look at the data, without the policy features. The next steps are to treat the
-spikes of fixed amounts separately from the continuous part, as is done with zero-adjusted models in
-GAMLSS~\cite{gamlss}, to describe the largest claims with a Pareto tail, and to use the policy
-features to compare a gamma regression model with least squares and least absolute deviation
-regression. These steps connect this section to the nonlinear models of the project plan.
+The spikes can be modelled directly. In a two-part model, as in the zero-adjusted models of
+GAMLSS~\cite{gamlss}, a claim takes each of the five fixed amounts $a_j$ with probability $p_j$, and
+otherwise comes from a continuous distribution $F_c$. The distribution function is
+\[
+  F(y) = \sum_{j=1}^{5} p_j\,\mathbf{1}\{y \geq a_j\} + \Big(1 - \sum_{j=1}^{5} p_j\Big) F_c(y) .
+\]
+The maximum likelihood estimate of each $p_j$ is the fraction of claims at $a_j$, which gives a total
+of $0.42$, and we fit a lognormal for $F_c$ to the remaining claims. The code is the script
+\texttt{sim\_I\_empirical\_enhanced.py} in the folder \texttt{Classic\_sim}.
+Figure~\ref{fig:real-cdf} compares the result with the data.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{../figures/simI_spike_adjusted_cdf.png}
+\caption{Empirical distribution function of the claims, with the two-part model, the single gamma
+fit and the Gaussian fit.}
+\label{fig:real-cdf}
+\end{figure}
+
+The two-part model follows the vertical jump of the data near $1200$, which no continuous fit can
+do, and the KS statistic falls from $0.255$, for the same lognormal used on its own, to $0.204$. The remaining gap is
+in the continuous part below the spikes, so the lognormal is still not exact there. The important
+change is near the median, which sits on one of the spikes. This is where absolute error does its
+work, and it explains the zero standard error of the median in Table~\ref{tab:real-se}.
+
+\subsection{The tail of the largest claims}
+\label{sec:tail}
+
+For the largest claims we use the peaks-over-threshold method of extreme value theory. Above a
+high threshold $u$, the excess $y - u$ of almost any distribution is well described by a generalized
+Pareto distribution~\cite{pickands},
+\[
+  P(Y - u > z \mid Y > u) = \Big(1 + \frac{\xi z}{\sigma}\Big)^{-1/\xi}, \qquad z > 0 .
+\]
+For $\xi > 0$ this falls off like $z^{-1/\xi}$, a power law as for the Pareto noise of
+Section~\ref{sec:pareto}, with tail index $\alpha = 1/\xi$. Moments of order $\alpha$ and above are
+infinite. We take $u$ at the 95th percentile, $u = 4862$, which leaves $1332$ claims above it.
+The fit gives $\xi = 0.916$ and $\sigma = 3442$, so
+\[
+  \alpha = 1/\xi = 1.09 .
+\]
+Figure~\ref{fig:real-tail} shows that the fit follows the data up to the largest claim.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{../figures/simI_evt_tail_qq.png}
+\caption{QQ plot of the $1332$ excesses above $u = 4862$ against the fitted generalized Pareto
+distribution, on log scales.}
+\label{fig:real-tail}
+\end{figure}
+
+\subsection{How robust is the tail, and what it does to the mean}
+\label{sec:tail-robust}
+
+The threshold $u$ is a choice, so we repeat the fit for $u$ from the 85th to the 99th percentile.
+The maximum likelihood estimate of $\xi$ has standard error about $(1+\xi)/\sqrt{n_u}$, with $n_u$
+the number of claims above $u$~\cite{smith87}, which gives an interval for $\alpha$. We then remove
+the largest claims one by one and follow the mean, the median, the $1\%$ trimmed mean and the
+standard error of the mean, and finally we follow the running mean and median as the claims arrive in
+a random order. The code is in \texttt{Classic\_sim/sim\_M\_claims\_tail.py}, and the results are in
+Figure~\ref{fig:real-robust} and Table~\ref{tab:real-drop}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{../figures/simM_claims_tail.png}
+\caption{Left: tail index against the threshold, with $95\%$ intervals. Middle: estimates of the
+typical claim after removing the largest claims, with the standard error of the mean dashed on the
+right axis. Right: running mean and median in a random order of the claims.}
+\label{fig:real-robust}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rcccc}
+\toprule
+Largest claims removed & Mean (MSE) & SE of the mean & $1\%$ trimmed mean & Median (MAE) \\
+\midrule
+0  & 2279 & 179.5 & 1443 & 1172 \\
+1  & 2126 & 94.0  & 1442 & 1172 \\
+5  & 1981 & 51.4  & 1440 & 1172 \\
+20 & 1839 & 35.6  & 1432 & 1172 \\
+50 & 1694 & 22.6  & 1416 & 1172 \\
+\bottomrule
+\end{tabular}
+\caption{Effect of removing the largest of the $26639$ claims.}
+\label{tab:real-drop}
+\end{table}
+
+The estimated $\alpha$ lies between $0.86$ and $1.28$ for every threshold, and the upper end of its
+interval never exceeds $1.6$. So the variance is infinite whichever threshold we choose. For several
+thresholds the interval even goes below $1$, so we cannot be sure that the mean itself is finite.
+
+This has three consequences for the earlier results.
+\begin{enumerate}
+  \item \textbf{The claims have infinite variance.} Since $\alpha < 2$, the data behave like the
+        Student-t noise with $\nu \leq 2$ of Section~\ref{sec:studentt}, not like gamma noise. The
+        sample standard deviation of $29297$ is not an estimate of a finite quantity. Removing only the
+        single largest claim, about $4$ million, halves it.
+  \item \textbf{No standard error of the mean is reliable.} The formula $\operatorname{Var}(w)/N$
+        behind the gamma, MCRB and bootstrap values of Table~\ref{tab:real-se} needs a finite
+        variance, and the bootstrap of the mean is known to fail when the variance is
+        infinite~\cite{athreya}. Section~\ref{sec:mcrb-data} showed that the sample MCRB is reliable
+        only once the moments it needs exist and are well estimated, and here even the second moment
+        is infinite. Table~\ref{tab:real-drop} shows what this means in practice. Removing one
+        claim out of $26639$ moves the mean by $153$, close to one of its own standard errors, and
+        halves the standard error. Removing $50$ claims, $0.2\%$ of the data, lowers the mean by a
+        quarter and the standard error by a factor $8$. The value of about $178$ is far better than
+        $16.8$, but it is not a stable property of the data.
+  \item \textbf{The gamma model hides the risk.} The claim exceeded with probability $0.001$ is
+        $162784$ in the data and $136187$ under the fitted tail, but only $19973$ under the gamma fit,
+        about $8$ times too small.
+\end{enumerate}
+
+The median does not move in any of these checks. It is $1172$ after the first $100$ claims of the
+random order and stays there (Figure~\ref{fig:real-robust}, right), while the running mean jumps each
+time a large claim arrives, like the mean under Cauchy noise in Section~\ref{sec:studentt}. The $1\%$
+trimmed mean sits in between. It is stable, but it estimates yet another quantity.
+
+For these data the choice between the losses is therefore clear. Squared error estimates the mean,
+which may exist but is dominated by a handful of claims and cannot be given a trustworthy error bar.
+Absolute error estimates the median, which is stable.
+
+\subsection{What is left}
+
+All of this treats the claims as samples from one distribution. The next step is to use the policy
+features and compare squared, absolute and adaptive losses for predicting each claim, which is done
+with neural networks in Section~\ref{sec:nn_claims}.
 
 \clearpage
 \input{neural_network_section}
@@ -2070,6 +2277,12 @@ regression. These steps connect this section to the nonlinear models of the proj
 \bibitem{sklearntweedie} scikit-learn developers, ``Tweedie regression on insurance claims,''
   scikit-learn documentation example,
   \url{https://scikit-learn.org/stable/auto_examples/linear_model/plot_tweedie_regression_insurance_claims.html}.
+\bibitem{pickands} J.~Pickands, ``Statistical inference using extreme order statistics,''
+  \emph{Annals of Statistics}, vol.~3, no.~1, pp.~119--131, 1975.
+\bibitem{smith87} R.~L.~Smith, ``Estimating tails of probability distributions,''
+  \emph{Annals of Statistics}, vol.~15, no.~3, pp.~1174--1207, 1987.
+\bibitem{athreya} K.~B.~Athreya, ``Bootstrap of the mean in the infinite variance case,''
+  \emph{Annals of Statistics}, vol.~15, no.~2, pp.~724--731, 1987.
 \bibitem{barron} J.~T.~Barron, ``A general and adaptive robust loss function,'' in \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)}, pp.~4331--4339, 2019.
 \bibitem{fortunati2016} S.~Fortunati, F.~Gini and M.~S.~Greco, ``The misspecified Cram\'er-Rao bound and its
   application to scatter matrix estimation in complex elliptically symmetric distributions,''

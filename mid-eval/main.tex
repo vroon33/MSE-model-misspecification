@@ -274,13 +274,344 @@
 %   \end{columns}
 % \end{frame}
 
+% ---------- Anshitha: gamma noise (report Section 7), about 2 minutes ----------
+
+\begin{frame}{Skewed noise: the gamma family}
+  \begin{columns}[c]
+    \column{0.55\textwidth}
+    \includegraphics[width=\linewidth]{simD_gamma_density.png}
+    \column{0.43\textwidth}
+    \small
+    \textbf{Noise:} $w = Y - k\theta$, \; $Y \sim \text{Gamma}(k, \theta)$.
+    \begin{itemize}
+      \item Zero mean, skewness $2/\sqrt{k}$.
+      \item $k = 1$: exponential. Large $k$: almost Gaussian.
+    \end{itemize}
+    \vspace{0.4em}
+    \textbf{CRLB} (valid for $k > 2$):
+    \[
+      \text{CRLB}_\gamma = \frac{(k-2)\,\theta^2}{N}
+    \]
+    \textbf{Mean (MSE):}
+    \[
+      \frac{\operatorname{Var}(\bar x)}{\text{CRLB}_\gamma} = \frac{k}{k-2}
+    \]
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Gamma noise: simulation results}
+  \begin{columns}[c]
+    \column{0.55\textwidth}
+    \includegraphics[width=\linewidth]{simD_gamma_ratio_vs_k.png}
+    \column{0.43\textwidth}
+    \small
+    $A = 1$, $\theta = 1$, $N = 100$, 5000 trials.
+    \begin{itemize}
+      \item \textbf{Mean (MSE):} unbiased, but wastes data. $3\times$ the CRLB at $k = 3$.
+      \item \textbf{Gamma MLE:} approaches the CRLB slowly ($1.18$ at $N = 100$, $1.04$ at $N = 1000$).
+      \item \textbf{Median (MAE):} lands at about $A - \theta/3 \approx 0.67$ (0.69 at $k = 1$), not $A = 1$, for every $k$. More data does not fix it.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Below $k = 2$: no CRLB, but the edge is informative}
+  \small
+  The data have a hard left edge at $A - k\theta$. \textbf{Edge estimator:} $\hat A_{\text{edge}} = \min_n x[n] + k\theta$ (this \emph{is} the gamma MLE for $k \le 1$).
+  \[
+    \text{MSE}(\hat A_{\text{edge}}) \approx \theta^2\,\Gamma\!\left(1 + \tfrac{2}{k}\right)\Gamma(k+1)^{2/k}\,N^{-2/k}
+    \qquad \text{vs} \qquad
+    \text{MSE}(\bar x) = \frac{k\theta^2}{N}
+  \]
+  \vspace{-0.6em}
+  \begin{center}
+    \includegraphics[width=0.92\linewidth]{simL_gamma_edge.png}
+  \end{center}
+  \vspace{-0.6em}
+  \begin{itemize}
+    \item $k < 2$: the edge wins, at rate $N^{-2/k}$. At $N = 100$, $k = 1$: \textbf{50$\times$} better than the mean.
+    \item $k > 2$: the mean wins. $k = 2$ is exactly where the Fisher information becomes infinite.
+  \end{itemize}
+\end{frame}
+
 % ============================================================
 % PART 3 (next speaker): add your frames here
 % ============================================================
 
+% (Bhuvi's MCRB frames go here, before the Pareto part.)
+
+% ---------- Harsh: Pareto noise (report Section 9), about 4 minutes ----------
+
+\begin{frame}{When the bound breaks: Pareto noise}
+  \begin{columns}[c]
+    \column{0.55\textwidth}
+    \includegraphics[width=\linewidth]{simF_pareto_density.png}
+    \column{0.43\textwidth}
+    \small
+    $P \sim \text{Pareto}(\alpha)$: \; $p(p) = \dfrac{\alpha}{p^{\alpha+1}}$, \; $p \ge 1$.
+    \vspace{0.3em}
+
+    \textbf{Noise:} $w = P - \dfrac{\alpha}{\alpha - 1}$ (zero mean).
+    \begin{itemize}
+      \item Heavy power-law tail: $E[P^r]$ finite only for $r < \alpha$.
+      \item \textbf{New feature:} the density does not start at zero. It \textbf{jumps} from $0$ to $\alpha$ at the left edge.
+      \item The edge, $A - \frac{1}{\alpha-1}$, moves with $A$.
+      \item Used for heavy-tailed radar sea clutter.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Why the CRLB does not apply}
+  \small
+  Score of one sample, with $u = $ the value of $P$:
+  \[
+    s(x; A) = \frac{\partial}{\partial A}\ln p(x; A) = \frac{\alpha + 1}{u},
+    \qquad
+    E[s] = (\alpha+1)\,E\!\left[\frac{1}{P}\right] = \alpha \;\neq\; 0 .
+  \]
+  \begin{itemize}
+    \item The CRLB needs $E[s] = 0$. It fails here.
+    \item Reason: the support moves with $A$. Differentiating $\int p(x;A)\,dx = 1$ gives an extra term equal to the \textbf{density at the edge}. It is zero only if the density is zero there. Here it is $\alpha$.
+    \item Computing the formula anyway gives a \textbf{naive CRLB}:
+    \[
+      \text{naive CRLB} = \frac{\alpha + 2}{N\,\alpha(\alpha+1)^2} \qquad (\text{falls like } 1/N)
+    \]
+    \item We will see an estimator beat it by $100\times$, so it is not a valid bound.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Three estimators, and a bound that still holds}
+  \small
+  \begin{tabular}{lll}
+    \toprule
+    Estimator & Variance & Rate \\
+    \midrule
+    Mean (MSE) & $\dfrac{\alpha}{(\alpha-1)^2(\alpha-2)\,N}$ \; ($\alpha > 2$) & $1/N$ \\[1.2ex]
+    Median (MAE) & $\approx \dfrac{2^{2/\alpha}}{N\alpha^2}$, biased: goes to $A + 2^{1/\alpha} - \frac{\alpha}{\alpha-1}$ & $1/N$ \\[1.2ex]
+    Min-based & $\dfrac{N\alpha}{(N\alpha-1)^2(N\alpha-2)} \approx \dfrac{1}{(N\alpha)^2}$ & $\mathbf{1/N^2}$ \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.5em}
+  \begin{itemize}
+    \item The minimum of $N$ Pareto($\alpha$) samples is Pareto($N\alpha$), so we can remove its bias exactly:
+      $\hat A_{\min} = \min_n x[n] + \frac{\alpha}{\alpha-1} - \frac{N\alpha}{N\alpha - 1}$.
+    \item \textbf{Chapman--Robbins bound} (no regularity needed): compare $A$ with a nearby $A + h$,
+      \[
+        \operatorname{Var}(\hat A) \ge \sup_{h > 0} \frac{h^2}{E_1(h)^N - 1}.
+      \]
+      If the data cannot tell $A$ from $A + h$, no estimator can be precise. As $h \to 0$ it becomes the CRLB when that is valid.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Pareto noise: simulation results}
+  \begin{columns}[c]
+    \column{0.55\textwidth}
+    \includegraphics[width=\linewidth]{simF_pareto_var_vs_N.png}
+    \column{0.43\textwidth}
+    \small
+    $A = 1$, $\alpha = 3$, 5000 trials.
+    \begin{itemize}
+      \item All measured variances match the formulas.
+      \item At $N = 100$: min-based $1.16\times10^{-5}$ vs naive CRLB $1.04\times10^{-3}$: \textbf{almost $100\times$ below} the ``bound''.
+      \item Slopes: mean, median, naive CRLB $-1$; min-based $-2.04$.
+      \item Chapman--Robbins: slope $-2.01$, just below the min-based estimator. \textbf{Valid and nearly tight.}
+    \end{itemize}
+    \vspace{0.3em}
+    \textbf{Takeaway:} a hard edge is very informative. MSE and MAE ignore it, so both are far from the best estimator.
+  \end{columns}
+\end{frame}
+
 % ============================================================
 % PART 4 (next speaker): add your frames here
 % ============================================================
+
+% ---------- Anshitha: real data (report Section 10), about 2 minutes ----------
+% Placed after the MCRB part, because the standard-error result uses the MCRB.
+
+\begin{frame}{Real data: French motor insurance claims}
+  \begin{columns}[c]
+    \column{0.55\textwidth}
+    \includegraphics[width=\linewidth]{simI_spike_adjusted_cdf.png}
+    \column{0.43\textwidth}
+    \small
+    26,639 claim amounts (\texttt{freMTPL2sev}). Noise unknown: we fit it.
+    \begin{itemize}
+      \item Mean $2279$, median $1172$.
+      \item $42\%$ of claims sit on 5 fixed amounts. A two-part model (spikes + lognormal) fits them.
+      \item Best gamma fit: $k = 0.69 < 1$. No CRLB exists.
+      \item MSE vs MAE is a choice of \emph{what} to estimate, not of efficiency.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Real data: how precise is the mean?}
+  \small
+  \textbf{SE of the mean:} gamma model $16.8$ \;vs\; sample MCRB $179.5$ \;$\approx$\; bootstrap $177.0$
+  \;$\Rightarrow$\; the wrong model is \textbf{$10.7\times$ overconfident}.
+  \begin{center}
+    \includegraphics[width=\linewidth]{simM_claims_tail.png}
+  \end{center}
+  \vspace{-0.6em}
+  \begin{itemize}
+    \item Tail index $\alpha$ between $0.86$ and $1.28$ for every threshold: $\alpha < 2$, so the variance is \textbf{infinite}.
+    \item Remove 1 claim of 26,639: the mean moves by 153 and its SE halves. The median never moves.
+    \item \textbf{Takeaway:} on these data MAE gives a stable answer. MSE does not, and no error bar on it can be trusted.
+  \end{itemize}
+\end{frame}
+
+% ---------- Harsh: neural networks (report Section 11), about 4 minutes ----------
+
+\begin{frame}{Neural networks: the loss is still a noise model}
+  \small
+  From one number $A$ to a whole function:
+  \[
+    y = f^*(x) + w, \qquad f^*(x) = \sin(2\pi x) + 0.5x, \qquad x \sim \mathcal{U}[0, 1].
+  \]
+  \begin{itemize}
+    \item Network $f_\theta$: MLP, 3 hidden layers of width 64, GELU, AdamW, 400 epochs. $N = 250$, 25 independent trials.
+    \item Losses compared: MSE (Gaussian), MAE (Laplace), Huber, the matched likelihood, and \textbf{RCOS}, which picks the loss from the data.
+    \item Noise: Gaussian ($\sigma = 0.3$), centered gamma ($k = 3$, skewed), Student-$t$ ($\nu = 3$, heavy tails).
+  \end{itemize}
+  \textbf{Error measure} over the 25 trained networks, with $\bar f$ their average:
+  \[
+    \text{Total risk} = \underbrace{\tfrac{1}{K}\textstyle\sum_k \big(\bar f(x_k) - f^*(x_k)\big)^2}_{\text{Bias}^2}
+    + \underbrace{\tfrac{1}{K}\textstyle\sum_k \tfrac{1}{M}\sum_m \big(f^{(m)}(x_k) - \bar f(x_k)\big)^2}_{\text{Variance}}
+  \]
+  The same split as in the DC case: a wrong target shows up as bias, a wasteful loss as variance.
+\end{frame}
+
+\begin{frame}{RCOS: choosing the loss from the residuals}
+  \small
+  \begin{enumerate}
+    \item Split the training data: $75\%$ to fit, $25\%$ to calibrate. The test set is never touched.
+    \item Train a pilot network with Huber loss, and compute residuals $r_i$ on the calibration part.
+    \item Measure skewness $\hat\gamma_1$, excess kurtosis $\hat\kappa$ and the tail ratio $\hat\sigma / \hat\sigma_{\text{MAD}}$.
+    \item Choose the loss:
+      \begin{itemize}
+        \item $|\hat\gamma_1| \ge 0.45$ (skewed) $\Rightarrow$ gamma likelihood, with $\hat k = 4/\hat\gamma_1^2$
+        \item $\hat\kappa \ge 0.8$ or tail ratio $\ge 1.22$ (heavy tails) $\Rightarrow$ Student-$t$ likelihood, $\hat\nu = \max(2.1,\, 4 + 6/\hat\kappa)$
+        \item otherwise $\Rightarrow$ MSE
+      \end{itemize}
+    \item Retrain on all the training data with the chosen loss.
+  \end{enumerate}
+  \vspace{0.3em}
+  The rules use the moment formulas of the earlier sections: gamma skewness $2/\sqrt{k}$, Student-$t$ excess kurtosis $6/(\nu - 4)$.
+\end{frame}
+
+\begin{frame}{Neural networks: simulation results}
+  \small
+  \begin{center}
+  \begin{tabular}{lccc}
+    \toprule
+    Total risk (Bias$^2$) & Gaussian & Gamma ($k = 3$) & Student-$t$ ($\nu = 3$) \\
+    \midrule
+    MSE   & 0.068 (0.030) & 0.072 (0.033) & 0.079 (0.040) \\
+    MAE   & 0.098 (0.056) & 0.096 (\textbf{0.052}) & 0.089 (0.047) \\
+    Huber & 0.028 (0.009) & 0.047 (0.017) & 0.029 (0.007) \\
+    RCOS  & 0.083 (0.039) & 0.082 (0.043) & \textbf{0.066} (0.022) \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  $N = 250$, 25 trials.
+  \begin{itemize}
+    \item \textbf{Gaussian:} RCOS chose MSE in 25 of 25 trials, so it does not raise false alarms.
+    \item \textbf{Student-$t$:} RCOS has $16\%$ less risk than MSE ($0.066$ vs $0.079$).
+    \item \textbf{Gamma:} MAE has the largest bias ($0.052$ vs $0.033$ for MSE). It fits the conditional median, shifted from the mean as in the DC case.
+    \item Huber, the pilot loss, has the lowest risk in all three regimes.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Neural networks on the insurance claims}
+  \small
+  Predict each claim from the policy features (driver age, vehicle, area, \dots). Test set: $20\%$ of the policies.
+  \vspace{0.3em}
+  \begin{columns}[c]
+    \column{0.52\textwidth}
+    \includegraphics[width=\linewidth]{simNN_claims_predictions.png}
+    \column{0.46\textwidth}
+    \footnotesize
+    \begin{tabular}{lcc}
+      \toprule
+      Loss & Typical error & Typical prediction \\
+      \midrule
+      MSE    & 876 & 1869 \\
+      MAE    & 273 & 1143 \\
+      Huber  & 269 & 1115 \\
+      Barron & 268 & 1094 \\
+      \bottomrule
+    \end{tabular}
+
+    (median absolute error and median prediction, euros)
+    \begin{itemize}
+      \item MSE predicts a typical claim of 1869, pulled up by the largest claims, with about $3\times$ the typical error.
+      \item The robust losses stay near the 1172 median.
+      \item Same lesson as the DC case: MSE estimates the mean, which the tail dominates.
+    \end{itemize}
+  \end{columns}
+\end{frame}
+
+% ---------- Anshitha: BACKUP slides. Remove the % signs to use them. ----------
+%
+% \begin{frame}{Backup: CRLB for gamma noise}
+%   \small
+%   Write $x = c + Y$ with left edge $c = A - k\theta$. Then
+%   \[
+%     \ln p(x; A) = (k-1)\ln(x - c) - \frac{x - c}{\theta} + \text{const},
+%     \qquad
+%     s = \frac{\partial \ln p}{\partial A} = -\frac{k-1}{Y} + \frac{1}{\theta}.
+%   \]
+%   Negative moments: $E[1/Y] = \dfrac{1}{\theta(k-1)}$, \; $E[1/Y^2] = \dfrac{1}{\theta^2(k-1)(k-2)}$.
+%   \begin{itemize}
+%     \item $E[s] = 0$ for $k > 1$ (regularity holds).
+%     \item $i(A) = E[s^2] = \dfrac{1}{\theta^2(k-2)}$, finite only for $k > 2$.
+%     \item The density goes to zero at the edge for $k > 1$, so the bound is valid even though the support moves with $A$.
+%     \item $k \le 1$: density does not vanish at the edge, no CRLB (like Pareto).
+%   \end{itemize}
+% \end{frame}
+%
+% \begin{frame}{Backup: standard errors and removing the largest claims}
+%   \small
+%   \begin{center}
+%   \begin{tabular}{lcccc}
+%     \toprule
+%     & Value & SE, gamma model & SE, sample MCRB & SE, bootstrap \\
+%     \midrule
+%     Mean (MSE)   & 2279 & 16.8 & 179.5 & 177.0 \\
+%     Median (MAE) & 1172 & --   & --    & 0.0 \\
+%     \bottomrule
+%   \end{tabular}
+%   \vspace{0.6em}
+%   \begin{tabular}{rcccc}
+%     \toprule
+%     Removed & Mean & SE of mean & 1\% trimmed mean & Median \\
+%     \midrule
+%     0  & 2279 & 179.5 & 1443 & 1172 \\
+%     1  & 2126 & 94.0  & 1442 & 1172 \\
+%     5  & 1981 & 51.4  & 1440 & 1172 \\
+%     50 & 1694 & 22.6  & 1416 & 1172 \\
+%     \bottomrule
+%   \end{tabular}
+%   \end{center}
+%   Median SE is 0 because the median sits on a fixed settlement amount (1172, 2072 claims).
+% \end{frame}
+%
+% \begin{frame}{Backup: distribution fits to the claims}
+%   \small
+%   \begin{center}
+%   \begin{tabular}{lcccc}
+%     \toprule
+%     Family & Parameters & Log-likelihood & AIC & KS \\
+%     \midrule
+%     Lognormal   & 2 & $-223590$ & $447184$ & 0.233 \\
+%     Weibull     & 2 & $-227509$ & $455021$ & 0.204 \\
+%     Gamma       & 2 & $-231154$ & $462312$ & 0.272 \\
+%     Exponential & 1 & $-232593$ & $465188$ & 0.335 \\
+%     Gaussian    & 2 & $-311788$ & $623579$ & 0.469 \\
+%     \bottomrule
+%   \end{tabular}
+%   \end{center}
+%   AIC $= 2p - 2\ln L$, lower is better. KS = largest gap between fitted and data CDF.
+%   None fits well: the fixed-amount spikes and the very heavy tail.
+% \end{frame}
 
 \begin{frame}
   \centering

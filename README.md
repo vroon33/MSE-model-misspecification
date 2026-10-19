@@ -523,6 +523,12 @@ Every single simulation was executed via Python 3.11 with 5,000–20,000 Monte C
 - **Tests:** `python -m unittest discover -s tests -v` runs 14 tests, using stdlib `unittest` only.
 - **Report:** Section 8.5 (which estimators the MCRB binds), 8.8–8.10. **Viva guide and research memo:** [`docs/`](docs/).
 
+### Simulations L and M: Gamma Noise Below k = 2 and the Claims Tail (Anshitha)
+
+- **Simulation L:** [`Classic_sim/sim_L_gamma_edge.py`](Classic_sim/sim_L_gamma_edge.py) compares the mean, the median, the edge estimator $\hat A = \min_n x[n] + k\theta$ and the gamma MLE under gamma noise for $k = 0.5, 1, 1.5, 3$ and $N = 25\dots1600$. Prediction: MSE(edge) $\approx \theta^2\,\Gamma(1+2/k)\,\Gamma(k+1)^{2/k} N^{-2/k}$ against MSE(mean) $= k\theta^2/N$, so the edge wins for $k < 2$. Measured slopes $-4.07, -2.00, -1.35, -0.72$ vs predicted $-4, -2, -1.33, -0.67$. For $k \le 1$ the edge estimator is the gamma MLE. Also prints Var/CRLB of the gamma MLE at $k = 3$ for $N = 100\dots3000$ ($1.18 \to 1.04$). It writes `figures/simL_gamma_edge.png`.
+- **Simulation M:** [`Classic_sim/sim_M_claims_tail.py`](Classic_sim/sim_M_claims_tail.py) checks the Simulation I tail fit on `freMTPL2sev` for thresholds from the 85th to the 99th percentile (tail index $\alpha$ between 0.86 and 1.28, always below 2), removes the largest claims one by one (removing 1 of 26,639 moves the mean by 153 and halves its standard error, the median stays at 1172), and plots the running mean and median. It writes `figures/simM_claims_tail.png`.
+- **Report:** Sections 7.5, 10.5–10.7.
+
 ---
 
 ## 4. The Neural Network Pathway & Exhaustive Verification
